@@ -1623,6 +1623,9 @@ body.modal-open {
 }
 
 .cart-bar__panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 1.25rem - env(safe-area-inset-bottom, 0px));
   padding: 1rem 1.125rem 1.125rem;
   color: var(--color-cream);
   font-family: var(--font-title);
@@ -1632,6 +1635,7 @@ body.modal-open {
   border: 1px solid rgba(245, 235, 224, 0.14);
   border-radius: 1.25rem;
   box-shadow: 0 -10px 40px rgba(78, 42, 33, 0.22);
+  overflow: hidden;
 }
 
 .cart-bar__header {
@@ -1639,6 +1643,7 @@ body.modal-open {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .cart-bar__toggle {
@@ -1674,11 +1679,14 @@ body.modal-open {
 .cart-form-wrap {
   display: grid;
   grid-template-rows: 0fr;
+  flex: 0 0 auto;
+  min-height: 0;
   transition: grid-template-rows 0.45s cubic-bezier(0.16, 1, 0.3, 1), margin-top 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   margin-top: 0;
 }
 
 .cart-bar.is-form-open .cart-form-wrap {
+  flex: 1 1 auto;
   grid-template-rows: 1fr;
   margin-top: 0.875rem;
 }
@@ -1686,6 +1694,14 @@ body.modal-open {
 .cart-form-wrap > .cart-details {
   overflow: hidden;
   min-height: 0;
+}
+
+.cart-bar.is-form-open .cart-form-wrap > .cart-details {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.1rem;
 }
 
 .cart-items {
@@ -1928,9 +1944,22 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
 
+  .cart-bar__panel {
+    max-height: calc(100dvh - 0.75rem - env(safe-area-inset-bottom, 0px));
+  }
+
   .cart-bar__header {
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
+  }
+
+  .cart-bar__toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .cart-items__list {
+    max-height: none;
   }
 
   .cart-bar__btn {
@@ -1943,6 +1972,6 @@ body.modal-open {
   }
 
   body.has-cart.is-cart-expanded {
-    padding-bottom: calc(34rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(100dvh - 0.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
