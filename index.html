@@ -24,7 +24,7 @@
 
     <div class="header__bar container">
       <a class="header__brand" href="#accueil">
-        <img class="header__brand-logo" src="assets/Logo/logoo.png" alt="Les Bons Plats de Marlou" width="160" height="60">
+        <img class="header__brand-logo" src="assets/Logo/logo.png" alt="Les Bons Plats de Marlou">
       </a>
       <nav class="header__nav" aria-label="Navigation">
         <a class="header__nav-link" href="#comment-ca-marche">Comment ça marche</a>
@@ -47,7 +47,7 @@
   <div class="sticky-nav" id="sticky-nav" aria-hidden="true">
     <div class="sticky-nav__inner">
       <a class="sticky-nav__brand" href="#accueil">
-        <img src="assets/Logo/logoo.png" alt="Les Bons Plats de Marlou" width="120" height="45">
+        <img class="sticky-nav__logo" src="assets/Logo/logo.png" alt="Les Bons Plats de Marlou">
       </a>
       <nav class="sticky-nav__links" aria-label="Navigation fixe">
         <a class="sticky-nav__link" href="#comment-ca-marche">Comment ça marche</a>
@@ -166,7 +166,7 @@
 
       <div class="footer__col footer__col--brand">
         <a href="#accueil">
-          <img class="footer__logo" src="assets/Logo/logo.png" alt="Les Bons Plats de Marlou" width="140" height="52">
+          <img class="footer__logo" src="assets/Logo/logo.png" alt="Les Bons Plats de Marlou">
         </a>
         <p class="footer__tagline">Des produits frais · Une cuisine sincère</p>
         <p class="footer__note">On prépare vos plats chaque jour, comme à la maison.</p>
@@ -256,38 +256,47 @@
 
   <aside class="cart-bar" id="cart-bar" aria-hidden="true" aria-live="polite">
     <div class="cart-bar__inner container">
-      <form class="cart-form" id="cart-form" novalidate>
-        <p class="cart-form__heading">Finaliser votre commande</p>
-        <div class="cart-form__grid">
-          <label class="cart-form__field">
-            <span class="cart-form__label">Prénom et Nom <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
-            <input class="cart-form__input" type="text" id="cart-customer-name" name="customer-name" autocomplete="name" placeholder="Marie Dupont" maxlength="80" required>
-          </label>
-          <label class="cart-form__field">
-            <span class="cart-form__label">Numéro de téléphone <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
-            <input class="cart-form__input" type="tel" id="cart-customer-phone" name="customer-phone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" maxlength="20" required>
-          </label>
-          <label class="cart-form__field cart-form__field--full">
-            <span class="cart-form__label">Créneau de retrait <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
-            <select class="cart-form__input cart-form__select" id="cart-creneau" name="creneau" required>
-              <option value="">Choisir un créneau…</option>
-            </select>
-          </label>
-          <label class="cart-form__field cart-form__field--full">
-            <span class="cart-form__label">Commentaire ou remarque pour Marlou</span>
-            <textarea class="cart-form__input cart-form__textarea" id="cart-comment" name="comment" rows="2" maxlength="500" placeholder="Allergie, préférence de contact…"></textarea>
-          </label>
+      <div class="cart-bar__panel">
+        <div class="cart-bar__header">
+          <button type="button" class="cart-bar__toggle" id="cart-form-toggle" aria-expanded="false" aria-controls="cart-form-wrap" aria-label="Afficher mes informations">
+            <svg class="cart-bar__chevron" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M4.5 7 9 11.5 13.5 7" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="cart-bar__meta">
+            <p class="cart-bar__summary">
+              Total : <span id="cart-count">0</span> article(s) — <span id="cart-total">0,00&nbsp;€</span>
+            </p>
+            <p class="cart-bar__hint" id="cart-form-hint" role="status" hidden></p>
+          </div>
+          <button type="button" class="cart-bar__btn btn" id="cart-whatsapp">Commander par WhatsApp</button>
         </div>
-      </form>
 
-      <div class="cart-bar__actions">
-        <div class="cart-bar__meta">
-          <p class="cart-bar__summary">
-            Total : <span id="cart-count">0</span> article(s) — <span id="cart-total">0,00&nbsp;€</span>
-          </p>
-          <p class="cart-bar__hint" id="cart-form-hint" role="status" hidden></p>
+        <div class="cart-form-wrap" id="cart-form-wrap">
+          <form class="cart-form" id="cart-form" novalidate>
+            <p class="cart-form__heading">Finaliser votre commande</p>
+            <div class="cart-form__grid">
+              <label class="cart-form__field">
+                <span class="cart-form__label">Prénom et Nom <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
+                <input class="cart-form__input" type="text" id="cart-customer-name" name="customer-name" autocomplete="name" placeholder="Marie Dupont" maxlength="80" required>
+              </label>
+              <label class="cart-form__field">
+                <span class="cart-form__label">Numéro de téléphone <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
+                <input class="cart-form__input" type="tel" id="cart-customer-phone" name="customer-phone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" maxlength="20" required>
+              </label>
+              <label class="cart-form__field cart-form__field--full">
+                <span class="cart-form__label">Créneau de retrait <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
+                <select class="cart-form__input cart-form__select" id="cart-creneau" name="creneau" required>
+                  <option value="">Choisir un créneau…</option>
+                </select>
+              </label>
+              <label class="cart-form__field cart-form__field--full">
+                <span class="cart-form__label">Commentaire ou remarque pour Marlou</span>
+                <textarea class="cart-form__input cart-form__textarea" id="cart-comment" name="comment" rows="2" maxlength="500" placeholder="Allergie, préférence de contact…"></textarea>
+              </label>
+            </div>
+          </form>
         </div>
-        <button type="button" class="cart-bar__btn btn" id="cart-whatsapp" disabled>Commander par WhatsApp</button>
       </div>
     </div>
   </aside>

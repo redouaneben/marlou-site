@@ -1,32 +1,28 @@
-function timingSafeEqual(a, b) {
-  if (typeof a !== "string" || typeof b !== "string") return false;
-  if (a.length !== b.length) return false;
-
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i += 1) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return mismatch === 0;
-}
-
 export function getBearerToken(request) {
-  const header = request.headers.get("authorization") || "";
-  if (!header.startsWith("Bearer ")) return "";
-  return header.slice(7).trim();
+  const headers = request.headers;
+  let authHeader = '';
+
+  if (typeof headers.get === 'function') {
+    authHeader = headers.get('authorization') || headers.get('Authorization') || '';
+  } else if (headers) {
+    authHeader = headers['authorization'] || headers['Authorization'] || '';
+  }
+
+  if (!authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  return authHeader.substring(7);
 }
 
 export function isAuthorized(request) {
-  const expected = process.env.ADMIN_PASSWORD || "";
   const token = getBearerToken(request);
-
-  if (!expected || !token) return false;
-  return timingSafeEqual(token, expected);
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  return token && adminPassword && token === adminPassword;
 }
 
 export function unauthorizedResponse() {
   return {
     statusCode: 401,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ok: false, error: "Mot de passe incorrect ou session expirée." }),
+    body: JSON.stringify({ error: 'Unauthorized' }),
   };
 }

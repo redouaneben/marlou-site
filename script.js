@@ -608,6 +608,42 @@ const cartCustomerPhone = document.getElementById("cart-customer-phone");
 const cartCreneau = document.getElementById("cart-creneau");
 const cartComment = document.getElementById("cart-comment");
 const cartFormHint = document.getElementById("cart-form-hint");
+const cartFormToggle = document.getElementById("cart-form-toggle");
+let isCartFormOpen = false;
+let showCheckoutError = false;
+
+function setCartFormOpen(open) {
+  isCartFormOpen = Boolean(open);
+
+  cartBar?.classList.toggle("is-form-open", isCartFormOpen);
+  document.body.classList.toggle("is-cart-expanded", isCartFormOpen);
+
+  if (cartFormToggle) {
+    cartFormToggle.setAttribute("aria-expanded", String(isCartFormOpen));
+    cartFormToggle.setAttribute(
+      "aria-label",
+      isCartFormOpen ? "Masquer mes informations" : "Afficher mes informations"
+    );
+  }
+}
+
+function showCheckoutMessage(message) {
+  if (!cartFormHint) return;
+
+  cartFormHint.textContent = message;
+  cartFormHint.hidden = false;
+  cartFormHint.classList.remove("is-visible");
+  void cartFormHint.offsetWidth;
+  cartFormHint.classList.add("is-visible");
+}
+
+function clearCheckoutMessage() {
+  if (!cartFormHint) return;
+
+  cartFormHint.textContent = "";
+  cartFormHint.hidden = true;
+  cartFormHint.classList.remove("is-visible");
+}
 
 function initCartState() {
   dishes = document.querySelectorAll(".dish");
@@ -729,6 +765,12 @@ function updateUI() {
   cartBar.setAttribute("aria-hidden", String(!hasItems));
   document.body.classList.toggle("has-cart", hasItems);
 
+  if (!hasItems) {
+    setCartFormOpen(false);
+    showCheckoutError = false;
+    clearCheckoutMessage();
+  }
+
   dishes.forEach((dish) => {
     const id = dish.dataset.id;
     const minusBtn = dish.querySelector(".qty-btn--minus");
@@ -801,21 +843,21 @@ function isCheckoutValid() {
   );
 }
 
-function getCheckoutHint() {
+function getCheckoutErrorMessage() {
   const { totalItems } = getCartSummary();
   const { name, phoneNormalized, creneauId } = getCheckoutFormData();
 
   if (totalItems === 0) {
-    return "Ajoutez au moins un article à votre panier.";
+    return "Votre panier est vide — ajoutez un plat, on s'occupe du reste ! 🍽️";
   }
   if (name.length < 2) {
-    return "Indiquez votre prénom et nom pour continuer.";
+    return "Hop hop ! Dites-nous comment vous appeler — Marlou a hâte de préparer vos bons plats ! 😊";
   }
   if (phoneNormalized.length < 10) {
-    return "Indiquez un numéro de téléphone valide.";
+    return "Il nous manque juste votre numéro — comme ça, Marlou pourra vous confirmer la commande ! 📱";
   }
   if (!creneauId) {
-    return "Choisissez un créneau de retrait.";
+    return "Choisissez votre créneau de retrait, on vous garde une place bien au chaud ! ✨";
   }
   return "";
 }
@@ -823,25 +865,27 @@ function getCheckoutHint() {
 function updateCheckoutState() {
   if (!whatsappBtn) return;
 
-  const isValid = isCheckoutValid();
-  whatsappBtn.disabled = !isValid;
-
-  if (!cartFormHint) return;
-
-  const hint = getCheckoutHint();
   const { totalItems } = getCartSummary();
+  whatsappBtn.disabled = totalItems === 0;
 
-  if (hint && totalItems > 0) {
-    cartFormHint.textContent = hint;
-    cartFormHint.hidden = false;
-  } else {
-    cartFormHint.textContent = "";
-    cartFormHint.hidden = true;
+  if (isCheckoutValid()) {
+    showCheckoutError = false;
+    clearCheckoutMessage();
+    return;
+  }
+
+  if (showCheckoutError) {
+    showCheckoutMessage(getCheckoutErrorMessage());
   }
 }
 
 function initCheckoutForm() {
   populateCreneauxSelect();
+  setCartFormOpen(false);
+
+  cartFormToggle?.addEventListener("click", () => {
+    setCartFormOpen(!isCartFormOpen);
+  });
 
   const fields = [cartCustomerName, cartCustomerPhone, cartCreneau, cartComment];
   fields.forEach((field) => {
@@ -894,9 +938,19 @@ whatsappBtn.addEventListener("click", () => {
   }
 
   if (!isCheckoutValid()) {
-    updateCheckoutState();
+    showCheckoutError = true;
+    setCartFormOpen(true);
+    showCheckoutMessage(getCheckoutErrorMessage());
     cartForm?.reportValidity?.();
-    cartCustomerName?.focus();
+
+    if (cartCustomerName && !cartCustomerName.value.trim()) {
+      cartCustomerName.focus();
+    } else if (cartCustomerPhone && normalizePhone(cartCustomerPhone.value).length < 10) {
+      cartCustomerPhone.focus();
+    } else if (cartCreneau && !cartCreneau.value) {
+      cartCreneau.focus();
+    }
+
     return;
   }
 
