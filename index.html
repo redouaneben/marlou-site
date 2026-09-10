@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Commandez vos plats faits maison chez Les Bons Plats de Marlou. Choisissez en ligne, commandez du lundi au jeudi, récupérez en début de semaine.">
+  <meta name="theme-color" content="#F5EBE0">
+  <title>Les Bons Plats de Marlou</title>
+  <link rel="icon" href="assets/Logo/favicon_fond_clair.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/Logo/favicon_fond_clair.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header" id="accueil">
+    <div class="header__bg" aria-hidden="true">
+      <img class="header__bg-img is-visible" id="header-img-a" src="assets/Header/hearder 1.png" alt="" width="1200" height="675">
+      <img class="header__bg-img" id="header-img-b" src="assets/Header/hearder 1.png" alt="" width="1200" height="675">
+      <div class="header__scrim"></div>
+    </div>
+
+    <div class="header__bar container">
+      <a class="header__brand" href="#accueil">
+        <img class="header__brand-logo" src="assets/Logo/logoo.png" alt="Les Bons Plats de Marlou" width="160" height="60">
+      </a>
+      <nav class="header__nav" aria-label="Navigation">
+        <a class="header__nav-link" href="#comment-ca-marche">Comment ça marche</a>
+        <a class="header__nav-link" href="#carte-de-la-semaine">La carte</a>
+        <a class="header__nav-link" href="#la-boutique">La boutique</a>
+        <a class="header__nav-link" href="#faq">FAQ</a>
+      </nav>
+    </div>
+
+    <div class="header__bottom container">
+      <div class="header__copy">
+        <p class="header__label">Plats faits maison — commande en ligne</p>
+        <h1 class="header__title">Commandez vos repas<br>préparés par Marlou</h1>
+        <p class="header__pitch" id="header-pitch">Choisissez vos plats, validez du lundi au jeudi, récupérez en début de semaine.</p>
+        <p class="header__slogan">Des produits frais · Une cuisine sincère · Sans minimum</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="sticky-nav" id="sticky-nav" aria-hidden="true">
+    <div class="sticky-nav__inner">
+      <a class="sticky-nav__brand" href="#accueil">
+        <img src="assets/Logo/logoo.png" alt="Les Bons Plats de Marlou" width="120" height="45">
+      </a>
+      <nav class="sticky-nav__links" aria-label="Navigation fixe">
+        <a class="sticky-nav__link" href="#comment-ca-marche">Comment ça marche</a>
+        <a class="sticky-nav__link" href="#carte-de-la-semaine">La carte</a>
+        <a class="sticky-nav__link" href="#la-boutique">La boutique</a>
+        <a class="sticky-nav__link" href="#faq">FAQ</a>
+      </nav>
+    </div>
+  </div>
+
+  <section class="section section--how-it-works" id="comment-ca-marche" aria-labelledby="how-it-works-title">
+    <div class="container">
+      <h2 class="section__title" id="how-it-works-title">Comment ça marche ?</h2>
+
+      <ol class="steps">
+        <li class="step">
+          <span class="step__number" aria-hidden="true">1</span>
+          <h3 class="step__title">Je choisis</h3>
+          <p class="step__text">Je compose ma sélection de plats pour la semaine prochaine (sans minimum).</p>
+        </li>
+        <li class="step">
+          <span class="step__number" aria-hidden="true">2</span>
+          <h3 class="step__title">Je commande</h3>
+          <p class="step__text" id="step-commande-text">Je valide ma sélection du lundi au jeudi, pour anticiper la cuisine de Marlou.</p>
+        </li>
+        <li class="step">
+          <span class="step__number" aria-hidden="true">3</span>
+          <h3 class="step__title">Je récupère</h3>
+          <p class="step__text" id="step-retrait-text">Je viens chercher mes bons petits plats au point de retrait en début de semaine suivante.</p>
+        </li>
+      </ol>
+
+      <div class="cta-carte">
+        <a class="cta-carte__btn" href="#carte-de-la-semaine">
+          <span class="cta-carte__label">Voir la carte de la semaine</span>
+          <span class="cta-carte__arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <main>
+
+    <section class="section section--menu" id="carte-de-la-semaine" aria-labelledby="menu-title">
+      <div class="container">
+        <h2 class="section__title" id="menu-title">La Carte de la Semaine</h2>
+        <p class="section__intro">On prépare vos plats chaque jour, comme à la maison.</p>
+
+        <div class="menu-grid" id="menu-grid"></div>
+      </div>
+    </section>
+
+    <section class="section section--merch" id="la-boutique" aria-labelledby="merch-title">
+      <div class="container">
+        <h2 class="section__title" id="merch-title">La boutique</h2>
+        <p class="section__intro">Des petits objets pour prolonger l'esprit Marlou chez vous.</p>
+
+        <div class="menu-grid" id="boutique-grid"></div>
+      </div>
+    </section>
+
+    <section class="section section--faq" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <h2 class="section__title" id="faq-title">Questions fréquentes</h2>
+
+        <div class="faq">
+          <details class="faq__item">
+            <summary class="faq__question">Comment commander ?</summary>
+            <p class="faq__answer">Choisissez vos plats dans la carte, ajustez les quantités, puis cliquez sur « Commander par WhatsApp ». Votre sélection et le total s'envoient automatiquement à Marlou.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__question">Quand puis-je commander ?</summary>
+            <p class="faq__answer" id="faq-commandes">Les commandes sont ouvertes du <strong>lundi au jeudi</strong>, pour la semaine suivante. Cela laisse le temps à Marlou de préparer vos plats avec soin.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__question">Quand récupérer mes plats ?</summary>
+            <p class="faq__answer" id="faq-retrait-periode">Le retrait se fait en <strong>début de semaine suivante</strong>, au point de retrait indiqué par Marlou lors de la confirmation.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__question">Où se situe le point de retrait ?</summary>
+            <p class="faq__answer" id="faq-retrait-adresse">Le retrait s'effectue au <strong>49 Route de Chandieu à Toussieu</strong>, comme indiqué dans le mémo des commandes.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__question">Y a-t-il un minimum de commande ?</summary>
+            <p class="faq__answer">Non. Vous composez librement votre sélection, sans minimum de plats ni de montant.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__question">Comment payer ?</summary>
+            <p class="faq__answer">Le règlement se fait directement avec Marlou via WhatsApp, après validation de votre commande.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__question">La carte change-t-elle chaque semaine ?</summary>
+            <p class="faq__answer">Oui. Marlou propose une nouvelle carte chaque semaine, selon les produits de saison et son inspiration du moment.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__question">Comment se passe la conservation des plats ?</summary>
+            <p class="faq__answer">Tous les plats sont préparés à la maison avec des produits frais. Il est conseillé de suivre les indications de conservation fournies sur les barquettes ou de consommer rapidement les plats faits maison.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--closing" id="mot-de-la-fin">
+      <div class="container">
+        <p class="mood-line mood-line--closing">
+          <span>Cuisiner</span><span class="mood-line__sep" aria-hidden="true">·</span><span>Partager</span><span class="mood-line__sep" aria-hidden="true">·</span><span>Aimer</span>
+        </p>
+        <p class="closing__message">Merci de soutenir<br>le fait maison !</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__grid">
+
+      <div class="footer__col footer__col--brand">
+        <a href="#accueil">
+          <img class="footer__logo" src="assets/Logo/logo.png" alt="Les Bons Plats de Marlou" width="140" height="52">
+        </a>
+        <p class="footer__tagline">Des produits frais · Une cuisine sincère</p>
+        <p class="footer__note">On prépare vos plats chaque jour, comme à la maison.</p>
+      </div>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">Navigation</h3>
+        <ul class="footer__links">
+          <li><a href="#comment-ca-marche">Comment ça marche</a></li>
+          <li><a href="#carte-de-la-semaine">La carte</a></li>
+          <li><a href="#la-boutique">La boutique</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">Contact</h3>
+        <ul class="footer__links">
+          <li><a href="https://instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+          <li>Commande via WhatsApp</li>
+        </ul>
+        <p class="mood-line mood-line--footer">
+          <span>Cuisiner</span><span class="mood-line__sep" aria-hidden="true">·</span><span>Partager</span><span class="mood-line__sep" aria-hidden="true">·</span><span>Aimer</span>
+        </p>
+      </div>
+
+    </div>
+
+    <div class="container footer__bottom">
+      <p class="footer__copy">© Les Bons Plats de Marlou</p>
+    </div>
+  </footer>
+
+  <div class="item-modal" id="item-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
+    <div class="item-modal__backdrop" data-modal-close tabindex="-1"></div>
+    <div class="item-modal__panel">
+      <button type="button" class="item-modal__close" data-modal-close aria-label="Fermer">×</button>
+
+      <div class="item-modal__layout">
+        <div class="item-modal__gallery">
+          <div class="item-modal__image-wrap">
+            <img class="item-modal__image" id="item-modal-image" src="" alt="" width="1400" height="1050">
+          </div>
+          <div class="item-modal__thumbs" id="item-modal-thumbs" role="tablist" aria-label="Photos de l'article"></div>
+        </div>
+
+        <div class="item-modal__content">
+          <p class="item-modal__tag" id="item-modal-tag"></p>
+          <h2 class="item-modal__title" id="item-modal-title"></h2>
+          <p class="item-modal__price" id="item-modal-price"></p>
+          <p class="item-modal__desc" id="item-modal-desc"></p>
+
+          <div class="item-modal__variants item-modal__block--hidden" id="item-modal-variants">
+            <h3 class="item-modal__label">Couleur</h3>
+            <div class="variant-picker" role="group" aria-label="Couleur de l'article">
+              <button type="button" class="variant-btn variant-btn--modal" data-variant="clair">Clair</button>
+              <button type="button" class="variant-btn variant-btn--modal" data-variant="sombre">Sombre</button>
+            </div>
+          </div>
+
+          <div class="item-modal__blocks">
+            <div class="item-modal__block" id="item-modal-block-composition">
+              <h3 class="item-modal__label" id="item-modal-label-composition">Composition</h3>
+              <p class="item-modal__text" id="item-modal-composition"></p>
+            </div>
+            <div class="item-modal__block" id="item-modal-block-allergens">
+              <h3 class="item-modal__label">Allergènes</h3>
+              <p class="item-modal__text" id="item-modal-allergens"></p>
+            </div>
+            <div class="item-modal__block item-modal__block--hidden" id="item-modal-block-care">
+              <h3 class="item-modal__label">Entretien</h3>
+              <p class="item-modal__text" id="item-modal-care"></p>
+            </div>
+          </div>
+
+          <div class="item-modal__footer">
+            <div class="item-modal__qty dish__qty" role="group" id="item-modal-qty" aria-label="Quantité">
+              <button type="button" class="qty-btn qty-btn--minus" id="item-modal-minus" aria-label="Diminuer la quantité">−</button>
+              <span class="qty-value" id="item-modal-qty-value" aria-live="polite">0</span>
+              <button type="button" class="qty-btn qty-btn--plus" id="item-modal-plus" aria-label="Augmenter la quantité">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="cart-bar" id="cart-bar" aria-hidden="true" aria-live="polite">
+    <div class="cart-bar__inner container">
+      <form class="cart-form" id="cart-form" novalidate>
+        <p class="cart-form__heading">Finaliser votre commande</p>
+        <div class="cart-form__grid">
+          <label class="cart-form__field">
+            <span class="cart-form__label">Prénom et Nom <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
+            <input class="cart-form__input" type="text" id="cart-customer-name" name="customer-name" autocomplete="name" placeholder="Marie Dupont" maxlength="80" required>
+          </label>
+          <label class="cart-form__field">
+            <span class="cart-form__label">Numéro de téléphone <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
+            <input class="cart-form__input" type="tel" id="cart-customer-phone" name="customer-phone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" maxlength="20" required>
+          </label>
+          <label class="cart-form__field cart-form__field--full">
+            <span class="cart-form__label">Créneau de retrait <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
+            <select class="cart-form__input cart-form__select" id="cart-creneau" name="creneau" required>
+              <option value="">Choisir un créneau…</option>
+            </select>
+          </label>
+          <label class="cart-form__field cart-form__field--full">
+            <span class="cart-form__label">Commentaire ou remarque pour Marlou</span>
+            <textarea class="cart-form__input cart-form__textarea" id="cart-comment" name="comment" rows="2" maxlength="500" placeholder="Allergie, préférence de contact…"></textarea>
+          </label>
+        </div>
+      </form>
+
+      <div class="cart-bar__actions">
+        <div class="cart-bar__meta">
+          <p class="cart-bar__summary">
+            Total : <span id="cart-count">0</span> article(s) — <span id="cart-total">0,00&nbsp;€</span>
+          </p>
+          <p class="cart-bar__hint" id="cart-form-hint" role="status" hidden></p>
+        </div>
+        <button type="button" class="cart-bar__btn btn" id="cart-whatsapp" disabled>Commander par WhatsApp</button>
+      </div>
+    </div>
+  </aside>
+
+  <script src="script.js"></script>
+</body>
+</html>

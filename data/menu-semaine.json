@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "semaine": "2026-W38",
+    "titre": "La Carte de la Semaine",
+    "intro": "On prépare vos plats chaque jour, comme à la maison.",
+    "commandes": {
+      "debut": "2026-09-08",
+      "fin": "2026-09-11",
+      "jours": "lundi au jeudi",
+      "retrait": {
+        "adresse": "49 Route de Chandieu, Toussieu",
+        "periode": "début de semaine suivante",
+        "creneaux": [
+          { "id": "lun-17h", "label": "Lundi — 17h à 18h" },
+          { "id": "mar-12h", "label": "Mardi — 12h à 13h" },
+          { "id": "mer-18h", "label": "Mercredi — 18h à 19h" },
+          { "id": "jeu-12h", "label": "Jeudi — 12h à 13h" }
+        ]
+      }
+    }
+  },
+  "plats": [
+    {
+      "id": "1",
+      "nom": "Lasagnes maison",
+      "prix": 9.5,
+      "description": "Bœuf mijoté, sauce tomate, chèvre et mozzarella",
+      "composition": "Pâtes fraîches, bœuf haché mijoté, sauce tomate maison, chèvre, mozzarella, oignons, herbes de Provence, parmesan.",
+      "allergenes": "Gluten, lait, œuf. Traces possibles de fruits à coque.",
+      "image": "assets/Plats/Lasagnes.png",
+      "actif": true
+    },
+    {
+      "id": "2",
+      "nom": "Poulet curry coco",
+      "prix": 8.5,
+      "description": "Poulet tendre, lait de coco, légumes de saison, riz basmati",
+      "composition": "Poulet fermier, lait de coco, curry doux, légumes de saison, riz basmati, coriandre fraîche, oignons, ail.",
+      "allergenes": "Aucun allergène majeur. Préparé dans une cuisine utilisant gluten, lait et fruits à coque.",
+      "image": "assets/Plats/Poulet curry coco.png",
+      "actif": true
+    },
+    {
+      "id": "3",
+      "nom": "Parmentier de canard",
+      "prix": 9,
+      "description": "Effiloché de canard, purée maison, oignons confits",
+      "composition": "Effiloché de canard confit, purée de pommes de terre maison, oignons confits, beurre, lait, muscade.",
+      "allergenes": "Lait. Traces possibles de gluten.",
+      "image": "assets/Plats/Parmentier de canard.png",
+      "actif": true
+    },
+    {
+      "id": "4",
+      "nom": "Gratin de légumes",
+      "prix": 8,
+      "description": "Légumes de saison rôtis, sauce béchamel légère, fromage",
+      "composition": "Légumes de saison rôtis, béchamel légère, emmental, chapelure, huile d'olive, herbes fraîches.",
+      "allergenes": "Gluten, lait. Traces possibles d'œuf.",
+      "image": "assets/Plats/Gratin de légumes.png",
+      "actif": true
+    },
+    {
+      "id": "5",
+      "nom": "Pâtes pesto & burrata",
+      "prix": 8.5,
+      "description": "Pesto maison, tomates rôties, burrata crémeuse",
+      "composition": "Pâtes, pesto maison (basilic, pignons, parmesan, huile d'olive), tomates rôties, burrata, poivre.",
+      "allergenes": "Gluten, lait, fruits à coque (pignons).",
+      "image": "assets/Plats/Pâtes pesto & burrata.png",
+      "actif": true
+    },
+    {
+      "id": "6",
+      "nom": "Chili sin carne",
+      "prix": 8.5,
+      "description": "Haricots rouges, maïs, poivrons, sauce tomate épicée, riz",
+      "composition": "Haricots rouges, maïs, poivrons, tomates, oignons, épices douces, riz basmati, coriandre.",
+      "allergenes": "Aucun allergène majeur. Préparé dans une cuisine utilisant gluten, lait et fruits à coque.",
+      "image": "assets/Plats/Chili sin carne.png",
+      "actif": true
+    },
+    {
+      "id": "7",
+      "nom": "Tarte du moment",
+      "prix": 4.5,
+      "description": "Selon l'inspiration et les produits de la semaine",
+      "composition": "Pâte brisée maison, garniture selon l'inspiration du moment et les produits de la semaine.",
+      "allergenes": "Gluten, lait, œuf. Allergènes variables selon la recette — demandez le détail à Marlou.",
+      "image": "assets/Plats/Tarte du moment.png",
+      "actif": true
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "titre": "La boutique",
+    "intro": "Des petits objets pour prolonger l'esprit Marlou chez vous."
+  },
+  "articles": [
+    {
+      "id": "m1",
+      "nom": "Tablier Marlou",
+      "prix": 25,
+      "description": "En coton épais, broderie discrète de la petite cocotte.",
+      "composition": "Coton épais 100 %, bretelles réglables, poche avant, broderie discrète de la petite cocotte.",
+      "care": "Lavage à 30 °C, repassage doux. Ne pas utiliser d'eau de Javel.",
+      "actif": true,
+      "variantPreviews": {
+        "clair": "assets/Merch/tablier_2_clair.png",
+        "sombre": "assets/Merch/tablier_2_sombre.png"
+      },
+      "images": [
+        { "src": "assets/Merch/tablier_2_clair.png", "label": "Clair — porté" },
+        { "src": "assets/Merch/tablier_2_sombre.png", "label": "Sombre — porté" },
+        { "src": "assets/Merch/tablier_plier_clair.png", "label": "Clair — plié" },
+        { "src": "assets/Merch/tablier_plier_sombre.png", "label": "Sombre — plié" }
+      ]
+    },
+    {
+      "id": "m2",
+      "nom": "Tote Bag",
+      "prix": 12,
+      "description": "En toile de coton robuste, idéal pour récupérer ses plats.",
+      "composition": "Toile de coton robuste, anses longues, impression logo Marlou, finitions renforcées.",
+      "care": "Lavage à 30 °C, séchage à l'air libre. Repasser sur l'envers si besoin.",
+      "actif": true,
+      "variantPreviews": {
+        "clair": "assets/Merch/tote_bag_clair.png",
+        "sombre": "assets/Merch/tote_bag_sombre.png"
+      },
+      "images": [
+        { "src": "assets/Merch/tote_bag_clair.png", "label": "Clair" },
+        { "src": "assets/Merch/tote_bag_sombre.png", "label": "Sombre" }
+      ]
+    },
+    {
+      "id": "m3",
+      "nom": "Mug en Céramique",
+      "prix": 15,
+      "description": "Céramique épaisse au fini mat, floqué du logo de la marque.",
+      "composition": "Céramique épaisse au fini mat, contenance 300 ml, floquage logo, compatible lave-vaisselle.",
+      "care": "Lavage à la main recommandé. Compatible lave-vaisselle en cycle doux.",
+      "actif": true,
+      "variantPreviews": {
+        "clair": "assets/Merch/tasse_en_ceramique_clair.png",
+        "sombre": "assets/Merch/tasse_en_ceramique_sombre.png"
+      },
+      "images": [
+        { "src": "assets/Merch/tasse_en_ceramique_clair.png", "label": "Clair" },
+        { "src": "assets/Merch/tasse_en_ceramique_sombre.png", "label": "Sombre" }
+      ]
+    },
+    {
+      "id": "m4",
+      "nom": "Torchonnier de Cuisine",
+      "prix": 10,
+      "description": "En lin lavé rétro-chic, aux teintes terracotta et marron.",
+      "composition": "Lin lavé, fini rétro-chic, teintes terracotta et marron, coutures renforcées, boucle d'accroche.",
+      "care": "Lavage à 40 °C. Le lin se bonifie avec le temps et les lavages.",
+      "actif": true,
+      "variantPreviews": {
+        "clair": "assets/Merch/torchon_clair.png",
+        "sombre": "assets/Merch/torchon_sombre.png"
+      },
+      "images": [
+        { "src": "assets/Merch/torchon_clair.png", "label": "Clair" },
+        { "src": "assets/Merch/torchon_sombre.png", "label": "Sombre" }
+      ]
+    },
+    {
+      "id": "m5",
+      "nom": "Carnet de Recettes",
+      "prix": 14,
+      "description": "Papier texturé crème pour noter ses propres secrets de cuisine.",
+      "composition": "Couverture souple, papier texturé crème 120 g, 64 pages lignées, ruban marque-page.",
+      "care": "Conserver à l'abri de l'humidité. Éviter l'exposition prolongée au soleil.",
+      "actif": true,
+      "variantPreviews": {
+        "clair": "assets/Merch/cahier_de_recettes_clair.png",
+        "sombre": "assets/Merch/cahier_de_recettes_sombre.png"
+      },
+      "images": [
+        { "src": "assets/Merch/cahier_de_recettes_clair.png", "label": "Clair" },
+        { "src": "assets/Merch/cahier_de_recettes_sombre.png", "label": "Sombre" },
+        { "src": "assets/Merch/cahier_de_recettes_interieur.png", "label": "Intérieur" }
+      ]
+    }
+  ]
+}

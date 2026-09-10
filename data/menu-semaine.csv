@@ -1,0 +1,28 @@
+Les Bons Plats de Marlou — Carte semaine 2026-W38,,,,,,,
+"Modifiez les plats ci-dessous. actif = TRUE pour afficher sur le site.",,,,,,,
+,,,,,,,
+id,nom,prix,description,composition,allergenes,image,actif
+1,Lasagnes maison,9.5,"Bœuf mijoté, sauce tomate, chèvre et mozzarella","Pâtes fraîches, bœuf haché mijoté, sauce tomate maison, chèvre, mozzarella, oignons, herbes de Provence, parmesan.","Gluten, lait, œuf. Traces possibles de fruits à coque.",assets/Plats/Lasagnes.png,TRUE
+2,Poulet curry coco,8.5,"Poulet tendre, lait de coco, légumes de saison, riz basmati","Poulet fermier, lait de coco, curry doux, légumes de saison, riz basmati, coriandre fraîche, oignons, ail.","Aucun allergène majeur. Préparé dans une cuisine utilisant gluten, lait et fruits à coque.",assets/Plats/Poulet curry coco.png,TRUE
+3,Parmentier de canard,9,"Effiloché de canard, purée maison, oignons confits","Effiloché de canard confit, purée de pommes de terre maison, oignons confits, beurre, lait, muscade.",Lait. Traces possibles de gluten.,assets/Plats/Parmentier de canard.png,TRUE
+4,Gratin de légumes,8,"Légumes de saison rôtis, sauce béchamel légère, fromage","Légumes de saison rôtis, béchamel légère, emmental, chapelure, huile d'olive, herbes fraîches.","Gluten, lait. Traces possibles d'œuf.",assets/Plats/Gratin de légumes.png,TRUE
+5,Pâtes pesto & burrata,8.5,"Pesto maison, tomates rôties, burrata crémeuse","Pâtes, pesto maison (basilic, pignons, parmesan, huile d'olive), tomates rôties, burrata, poivre.","Gluten, lait, fruits à coque (pignons).",assets/Plats/Pâtes pesto & burrata.png,TRUE
+6,Chili sin carne,8.5,"Haricots rouges, maïs, poivrons, sauce tomate épicée, riz","Haricots rouges, maïs, poivrons, tomates, oignons, épices douces, riz basmati, coriandre.","Aucun allergène majeur. Préparé dans une cuisine utilisant gluten, lait et fruits à coque.",assets/Plats/Chili sin carne.png,TRUE
+7,Tarte du moment,4.5,Selon l'inspiration et les produits de la semaine,"Pâte brisée maison, garniture selon l'inspiration du moment et les produits de la semaine.","Gluten, lait, œuf. Allergènes variables selon la recette — demandez le détail à Marlou.",assets/Plats/Tarte du moment.png,TRUE
+,,,,,,,
+——— Réglages de la semaine (modifier si besoin) ———,,,,,,,
+Semaine,2026-W38,,,,,,
+Titre de la carte,La Carte de la Semaine,,,,,,
+Intro,"On prépare vos plats chaque jour, comme à la maison.",,,,,,
+Commandes du,2026-09-08,,,,,,
+Commandes jusqu'au,2026-09-11,,,,,,
+Jours de commande,lundi au jeudi,,,,,,
+Adresse de retrait,"49 Route de Chandieu, Toussieu",,,,,,
+Période de retrait,début de semaine suivante,,,,,,
+,,,,,,,
+——— Créneaux de retrait ———,,,,,,,
+id,label,,,,,,
+lun-17h,Lundi — 17h à 18h,,,,,,
+mar-12h,Mardi — 12h à 13h,,,,,,
+mer-18h,Mercredi — 18h à 19h,,,,,,
+jeu-12h,Jeudi — 12h à 13h,,,,,,

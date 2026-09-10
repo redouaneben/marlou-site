@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#4E2A21">
+  <title>Administration — Les Bons Plats de Marlou</title>
+  <link rel="icon" href="assets/Logo/favicon_fond_clair.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <div class="admin-login" id="login-screen">
+    <div class="admin-login__card">
+      <img class="admin-login__logo" src="assets/Logo/logoo.png" alt="Les Bons Plats de Marlou" width="160" height="60">
+      <h1 class="admin-login__title">Espace Marlou</h1>
+      <p class="admin-login__intro">Connectez-vous pour mettre à jour la carte de la semaine.</p>
+      <form class="admin-login__form" id="login-form">
+        <label class="admin-field">
+          <span class="admin-field__label">Mot de passe</span>
+          <input class="admin-field__input" id="login-password" type="password" autocomplete="current-password" required>
+        </label>
+        <p class="admin-alert admin-alert--error" id="login-error" hidden></p>
+        <button class="admin-btn admin-btn--primary" type="submit">Entrer</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="admin-app" id="admin-app" hidden>
+    <header class="admin-header">
+      <div class="admin-header__inner">
+        <div>
+          <p class="admin-header__eyebrow">Administration</p>
+          <h1 class="admin-header__title">Carte de la semaine</h1>
+        </div>
+        <button class="admin-btn admin-btn--ghost" type="button" id="logout-btn">Se déconnecter</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <p class="admin-status" id="save-status" aria-live="polite"></p>
+      <div class="admin-alert admin-alert--error" id="form-errors" hidden></div>
+
+      <section class="admin-panel" aria-labelledby="settings-title">
+        <h2 class="admin-panel__title" id="settings-title">Réglages de la semaine</h2>
+        <p class="admin-panel__hint">Ces informations apparaissent sur le site public (titre, dates, retrait).</p>
+
+        <div class="admin-grid admin-grid--2">
+          <label class="admin-field">
+            <span class="admin-field__label">Semaine</span>
+            <input class="admin-field__input" id="meta-semaine" type="text" placeholder="2026-W38" required>
+            <span class="admin-field__help">Ex. 2026-W38</span>
+          </label>
+          <label class="admin-field">
+            <span class="admin-field__label">Titre de la carte</span>
+            <input class="admin-field__input" id="meta-titre" type="text" required>
+          </label>
+        </div>
+
+        <label class="admin-field">
+          <span class="admin-field__label">Message d'intro</span>
+          <textarea class="admin-field__textarea" id="meta-intro" rows="2" required></textarea>
+        </label>
+
+        <div class="admin-grid admin-grid--2">
+          <label class="admin-field">
+            <span class="admin-field__label">Commandes du</span>
+            <input class="admin-field__input" id="meta-debut" type="date" required>
+          </label>
+          <label class="admin-field">
+            <span class="admin-field__label">Commandes jusqu'au</span>
+            <input class="admin-field__input" id="meta-fin" type="date" required>
+          </label>
+        </div>
+
+        <div class="admin-grid admin-grid--2">
+          <label class="admin-field">
+            <span class="admin-field__label">Jours de commande</span>
+            <input class="admin-field__input" id="meta-jours" type="text" placeholder="lundi au jeudi">
+          </label>
+          <label class="admin-field">
+            <span class="admin-field__label">Période de retrait</span>
+            <input class="admin-field__input" id="meta-periode" type="text" placeholder="début de semaine suivante">
+          </label>
+        </div>
+
+        <label class="admin-field">
+          <span class="admin-field__label">Adresse de retrait</span>
+          <input class="admin-field__input" id="meta-adresse" type="text">
+        </label>
+
+        <div class="admin-subsection">
+          <div class="admin-subsection__head">
+            <h3 class="admin-subsection__title">Créneaux de retrait</h3>
+            <button class="admin-btn admin-btn--small" type="button" id="add-creneau-btn">+ Ajouter un créneau</button>
+          </div>
+          <div class="admin-creneaux" id="creneaux-list"></div>
+        </div>
+      </section>
+
+      <section class="admin-panel" aria-labelledby="plats-title">
+        <div class="admin-panel__head">
+          <div>
+            <h2 class="admin-panel__title" id="plats-title">Mes plats</h2>
+            <p class="admin-panel__hint">Activez ou désactivez un plat avec l'interrupteur « Visible sur le site ».</p>
+          </div>
+          <button class="admin-btn admin-btn--secondary" type="button" id="add-plat-btn">+ Ajouter un plat</button>
+        </div>
+        <div class="admin-plats" id="plats-list"></div>
+      </section>
+    </main>
+
+    <footer class="admin-footer">
+      <button class="admin-btn admin-btn--primary admin-btn--large" type="button" id="save-btn">
+        Enregistrer les modifications
+      </button>
+    </footer>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
