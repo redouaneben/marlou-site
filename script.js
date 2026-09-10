@@ -861,12 +861,14 @@ function populateCreneauxSelect() {
   const creneaux = menuData?.meta?.commandes?.retrait?.creneaux || [];
   cartCreneau.innerHTML = '<option value="">Choisir un créneau…</option>';
 
-  creneaux.forEach((creneau) => {
-    const option = document.createElement("option");
-    option.value = creneau.id;
-    option.textContent = creneau.label;
-    cartCreneau.appendChild(option);
-  });
+  creneaux
+    .filter((creneau) => creneau.actif !== false)
+    .forEach((creneau) => {
+      const option = document.createElement("option");
+      option.value = creneau.id;
+      option.textContent = creneau.label;
+      cartCreneau.appendChild(option);
+    });
 }
 
 function getCheckoutFormData() {

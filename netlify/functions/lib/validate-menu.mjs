@@ -26,6 +26,7 @@ export function sanitizeMenu(menu) {
         .map((creneau, index) => ({
           id: String(creneau?.id ?? `creneau-${index + 1}`).trim(),
           label: String(creneau?.label ?? "").trim(),
+          actif: creneau?.actif !== false,
         }))
         .filter((creneau) => creneau.id && creneau.label)
     : [];

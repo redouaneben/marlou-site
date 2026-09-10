@@ -1,5 +1,5 @@
 /**
- * Administration Marlou — gestion carte de la semaine
+ * Administration Marlou — interface SaaS
  */
 
 const API = {
@@ -10,6 +10,7 @@ const API = {
 
 const TOKEN_KEY = "marlou_admin_token";
 const DRAFT_KEY = "marlou_admin_draft";
+const VIEW_MODE_KEY = "marlou_admin_view_mode";
 
 const loginScreen = document.getElementById("login-screen");
 const adminApp = document.getElementById("admin-app");
@@ -24,6 +25,30 @@ const platsList = document.getElementById("plats-list");
 const creneauxList = document.getElementById("creneaux-list");
 const addPlatBtn = document.getElementById("add-plat-btn");
 const addCreneauBtn = document.getElementById("add-creneau-btn");
+const weekBadge = document.getElementById("week-badge");
+const platFilter = document.getElementById("plat-filter");
+const viewPlats = document.getElementById("view-plats");
+const viewSettings = document.getElementById("view-settings");
+const platModal = document.getElementById("plat-modal");
+const platModalOverlay = document.getElementById("plat-modal-overlay");
+const platModalClose = document.getElementById("plat-modal-close");
+const platModalTitle = document.getElementById("plat-modal-title");
+const modalDeleteBtn = document.getElementById("modal-delete-btn");
+const modalSaveBtn = document.getElementById("modal-save-btn");
+const modalPhotoBtn = document.getElementById("modal-photo-btn");
+const modalFile = document.getElementById("modal-file");
+
+const modalFields = {
+  nom: document.getElementById("modal-nom"),
+  prix: document.getElementById("modal-prix"),
+  description: document.getElementById("modal-description"),
+  composition: document.getElementById("modal-composition"),
+  allergenes: document.getElementById("modal-allergenes"),
+  actif: document.getElementById("modal-actif"),
+  preview: document.getElementById("modal-preview"),
+  previewPlaceholder: document.getElementById("modal-preview-placeholder"),
+  photoPath: document.getElementById("modal-photo-path"),
+};
 
 const metaFields = {
   semaine: document.getElementById("meta-semaine"),
@@ -44,6 +69,12 @@ const pendingFiles = new Map();
 
 /** @type {Map<string, string>} */
 const previewUrls = new Map();
+
+let platViewMode = localStorage.getItem(VIEW_MODE_KEY) || "grid";
+let activeTab = "plats";
+let editingPlatId = null;
+let dragId = null;
+let dragType = null;
 
 function getToken() {
   return sessionStorage.getItem(TOKEN_KEY) || "";
@@ -69,6 +100,12 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
+function formatPrice(value) {
+  const prix = Number.parseFloat(String(value).replace(",", "."));
+  if (!Number.isFinite(prix)) return "—";
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(prix);
+}
+
 function showLogin() {
   loginScreen.hidden = false;
   adminApp.hidden = true;
@@ -87,25 +124,43 @@ function setStatus(message, type = "") {
 function showFormErrors(messages) {
   if (!messages.length) {
     formErrors.hidden = true;
-    formErrors.textContent = "";
+    formErrors.innerHTML = "";
     return;
   }
-
   formErrors.hidden = false;
   formErrors.innerHTML = messages.map((msg) => `<p>${escapeHtml(msg)}</p>`).join("");
 }
 
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function saveDraft() {
+  if (!menuState) return;
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(menuState));
+}
+
+function loadDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+}
+
 function nextPlatId() {
   const ids = menuState.plats
-    .map((plat) => Number.parseInt(plat.id, 10))
-    .filter((value) => Number.isFinite(value));
-  const maxId = ids.length ? Math.max(...ids) : 0;
-  return String(maxId + 1);
+    .map((p) => Number.parseInt(p.id, 10))
+    .filter((n) => Number.isFinite(n));
+  return String((ids.length ? Math.max(...ids) : 0) + 1);
 }
 
 function nextCreneauId() {
-  const count = menuState.meta.commandes.retrait.creneaux.length + 1;
-  return `creneau-${count}`;
+  return `creneau-${menuState.meta.commandes.retrait.creneaux.length + 1}`;
 }
 
 function createEmptyPlat() {
@@ -121,30 +176,6 @@ function createEmptyPlat() {
   };
 }
 
-function deepClone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function saveDraft() {
-  if (!menuState) return;
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(menuState));
-}
-
-function loadDraft() {
-  const raw = localStorage.getItem(DRAFT_KEY);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY);
-}
-
 function readMetaFromForm() {
   menuState.meta.semaine = metaFields.semaine.value.trim();
   menuState.meta.titre = metaFields.titre.value.trim();
@@ -154,6 +185,7 @@ function readMetaFromForm() {
   menuState.meta.commandes.jours = metaFields.jours.value.trim();
   menuState.meta.commandes.retrait.periode = metaFields.periode.value.trim();
   menuState.meta.commandes.retrait.adresse = metaFields.adresse.value.trim();
+  if (weekBadge) weekBadge.textContent = menuState.meta.semaine || "—";
 }
 
 function writeMetaToForm() {
@@ -166,11 +198,288 @@ function writeMetaToForm() {
   metaFields.jours.value = meta.commandes.jours || "";
   metaFields.periode.value = meta.commandes.retrait.periode || "";
   metaFields.adresse.value = meta.commandes.retrait.adresse || "";
+  if (weekBadge) weekBadge.textContent = meta.semaine || "—";
+}
+
+function getPlatPreview(plat) {
+  if (previewUrls.has(plat.id)) return previewUrls.get(plat.id);
+  return plat.image || "";
+}
+
+function getFilteredPlats() {
+  const filter = platFilter?.value || "all";
+  return menuState.plats.filter((plat) => {
+    if (filter === "active") return plat.actif !== false;
+    if (filter === "inactive") return plat.actif === false;
+    return true;
+  });
+}
+
+function renderIosSwitch(checked, label = "", compact = false) {
+  return `
+    <label class="ios-switch${compact ? " ios-switch--compact" : ""}" data-stop-prop>
+      <input type="checkbox" data-field="actif" ${checked ? "checked" : ""}>
+      <span class="ios-switch__track" aria-hidden="true"><span class="ios-switch__thumb"></span></span>
+      ${label ? `<span class="ios-switch__label">${escapeHtml(label)}</span>` : ""}
+    </label>
+  `;
+}
+
+function renderStatusPill(actif) {
+  return actif !== false
+    ? '<span class="status-pill status-pill--on">Actif</span>'
+    : '<span class="status-pill status-pill--off">Masqué</span>';
+}
+
+function renderPlatCard(plat) {
+  const preview = getPlatPreview(plat);
+  const inactive = plat.actif === false ? " is-inactive" : "";
+  return `
+    <article class="admin-plat-card${inactive}" data-plat-id="${escapeHtml(plat.id)}" draggable="true">
+      ${
+        preview
+          ? `<img class="admin-plat-card__thumb" src="${escapeHtml(preview)}" alt="">`
+          : `<div class="admin-plat-card__thumb admin-plat-card__thumb--empty">Photo</div>`
+      }
+      <div class="admin-plat-card__body">
+        <div class="admin-plat-card__top">
+          <h3 class="admin-plat-card__name">${escapeHtml(plat.nom || "Nouveau plat")}</h3>
+          ${renderIosSwitch(plat.actif !== false, "", true)}
+        </div>
+        <p class="admin-plat-card__price">${formatPrice(plat.prix)}</p>
+        <p class="admin-plat-card__desc">${escapeHtml(plat.description || "Ajoutez une description…")}</p>
+        ${renderStatusPill(plat.actif !== false)}
+      </div>
+    </article>
+  `;
+}
+
+function renderPlatRow(plat) {
+  const preview = getPlatPreview(plat);
+  const inactive = plat.actif === false ? " is-inactive" : "";
+  return `
+    <article class="admin-plat-row${inactive}" data-plat-id="${escapeHtml(plat.id)}" draggable="true">
+      <span class="admin-plat-row__drag" aria-hidden="true">⠿</span>
+      ${
+        preview
+          ? `<img class="admin-plat-row__thumb" src="${escapeHtml(preview)}" alt="">`
+          : `<div class="admin-plat-row__thumb admin-plat-row__thumb--empty">—</div>`
+      }
+      <div class="admin-plat-row__info">
+        <p class="admin-plat-row__name">${escapeHtml(plat.nom || "Nouveau plat")}</p>
+        <p class="admin-plat-row__meta">${formatPrice(plat.prix)} · ${escapeHtml(plat.description || "—")}</p>
+      </div>
+      ${renderStatusPill(plat.actif !== false)}
+      ${renderIosSwitch(plat.actif !== false, "", true)}
+      <button type="button" class="admin-plat-row__edit" data-action="edit-plat">Modifier</button>
+    </article>
+  `;
+}
+
+function renderPlats() {
+  if (!platsList) return;
+
+  platsList.className = `admin-plats admin-plats--${platViewMode}`;
+  const plats = getFilteredPlats();
+
+  if (!plats.length) {
+    platsList.innerHTML = `<p class="admin-empty">Aucun plat dans cette vue. Ajoutez-en un ou changez le filtre.</p>`;
+    return;
+  }
+
+  platsList.innerHTML =
+    platViewMode === "list"
+      ? plats.map(renderPlatRow).join("")
+      : plats.map(renderPlatCard).join("");
+}
+
+function renderCreneaux() {
+  if (!creneauxList) return;
+
+  const creneaux = menuState.meta.commandes.retrait.creneaux;
+  creneauxList.innerHTML = creneaux
+    .map(
+      (creneau, index) => `
+      <div class="admin-creneau-row${creneau.actif === false ? " is-inactive" : ""}" data-creneau-index="${index}" draggable="true">
+        <span class="admin-creneau-row__drag" aria-hidden="true">⠿</span>
+        <label class="admin-field">
+          <span class="admin-field__label">Code</span>
+          <input class="admin-field__input" data-field="id" type="text" value="${escapeHtml(creneau.id)}">
+        </label>
+        <label class="admin-field">
+          <span class="admin-field__label">Libellé affiché</span>
+          <input class="admin-field__input" data-field="label" type="text" value="${escapeHtml(creneau.label)}" placeholder="Lundi — 17h à 18h">
+        </label>
+        ${renderIosSwitch(creneau.actif !== false, "Actif")}
+        <button type="button" class="admin-icon-btn" data-action="remove-creneau" aria-label="Supprimer">×</button>
+      </div>
+    `
+    )
+    .join("");
+}
+
+function renderAll() {
+  writeMetaToForm();
+  renderPlats();
+  renderCreneaux();
+}
+
+function syncCreneauxFromDom() {
+  const items = [...creneauxList.querySelectorAll("[data-creneau-index]")];
+  menuState.meta.commandes.retrait.creneaux = items.map((item, index) => ({
+    id: item.querySelector('[data-field="id"]').value.trim() || `creneau-${index + 1}`,
+    label: item.querySelector('[data-field="label"]').value.trim(),
+    actif: item.querySelector('[data-field="actif"]')?.checked !== false,
+  }));
+}
+
+function setPlatViewMode(mode) {
+  platViewMode = mode;
+  localStorage.setItem(VIEW_MODE_KEY, mode);
+  document.querySelectorAll(".admin-view-toggle__btn").forEach((btn) => {
+    const active = btn.dataset.view === mode;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-pressed", String(active));
+  });
+  renderPlats();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll(".admin-segment__btn").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.tab === tab);
+  });
+  viewPlats.hidden = tab !== "plats";
+  viewSettings.hidden = tab !== "settings";
+}
+
+function getPlatById(id) {
+  return menuState.plats.find((p) => p.id === id);
+}
+
+function syncModalToPlat() {
+  if (!editingPlatId) return;
+  const plat = getPlatById(editingPlatId);
+  if (!plat) return;
+
+  plat.nom = modalFields.nom.value.trim();
+  plat.prix = modalFields.prix.value.trim();
+  plat.description = modalFields.description.value.trim();
+  plat.composition = modalFields.composition.value.trim();
+  plat.allergenes = modalFields.allergenes.value.trim();
+  plat.actif = modalFields.actif.checked;
+}
+
+function updateModalPreview(plat) {
+  const preview = getPlatPreview(plat);
+  if (preview) {
+    modalFields.preview.src = preview;
+    modalFields.preview.hidden = false;
+    modalFields.previewPlaceholder.hidden = true;
+  } else {
+    modalFields.preview.hidden = true;
+    modalFields.previewPlaceholder.hidden = false;
+  }
+  modalFields.photoPath.textContent = plat.image ? `Fichier : ${plat.image}` : "";
+}
+
+function openPlatModal(id) {
+  const plat = getPlatById(id);
+  if (!plat) return;
+
+  editingPlatId = id;
+  platModalTitle.textContent = plat.nom || "Nouveau plat";
+  modalFields.nom.value = plat.nom || "";
+  modalFields.prix.value = plat.prix ?? "";
+  modalFields.description.value = plat.description || "";
+  modalFields.composition.value = plat.composition || "";
+  modalFields.allergenes.value = plat.allergenes || "";
+  modalFields.actif.checked = plat.actif !== false;
+  updateModalPreview(plat);
+
+  platModal.hidden = false;
+  platModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-modal-open");
+  requestAnimationFrame(() => platModal.classList.add("is-open"));
+  modalFields.nom.focus();
+}
+
+function closePlatModal() {
+  syncModalToPlat();
+  editingPlatId = null;
+  platModal.classList.remove("is-open");
+  platModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-modal-open");
+  setTimeout(() => {
+    platModal.hidden = true;
+  }, 350);
+  renderPlats();
+  saveDraft();
+}
+
+function reorderItems(array, fromId, toId, getId) {
+  const fromIndex = array.findIndex((item) => getId(item) === fromId);
+  const toIndex = array.findIndex((item) => getId(item) === toId);
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+
+  const [moved] = array.splice(fromIndex, 1);
+  array.splice(toIndex, 0, moved);
+}
+
+function setupDragDrop(container, type) {
+  container.addEventListener("dragstart", (event) => {
+    const item = event.target.closest(type === "plat" ? "[data-plat-id]" : "[data-creneau-index]");
+    if (!item || event.target.closest("[data-stop-prop], .ios-switch, button, input, label.admin-field")) {
+      event.preventDefault();
+      return;
+    }
+
+    dragType = type;
+    if (type === "plat") {
+      dragId = item.dataset.platId;
+    } else {
+      dragId = item.dataset.creneauIndex;
+    }
+    item.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+  });
+
+  container.addEventListener("dragend", (event) => {
+    event.target.closest(".is-dragging")?.classList.remove("is-dragging");
+    dragId = null;
+    dragType = null;
+  });
+
+  container.addEventListener("dragover", (event) => {
+    if (!dragId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  });
+
+  container.addEventListener("drop", (event) => {
+    event.preventDefault();
+    const item = event.target.closest(type === "plat" ? "[data-plat-id]" : "[data-creneau-index]");
+    if (!item || !dragId || dragType !== type) return;
+
+    if (type === "plat") {
+      reorderItems(menuState.plats, dragId, item.dataset.platId, (p) => p.id);
+      renderPlats();
+    } else {
+      syncCreneauxFromDom();
+      const from = Number.parseInt(dragId, 10);
+      const to = Number.parseInt(item.dataset.creneauIndex, 10);
+      const list = menuState.meta.commandes.retrait.creneaux;
+      const [moved] = list.splice(from, 1);
+      list.splice(to, 0, moved);
+      renderCreneaux();
+    }
+    saveDraft();
+  });
 }
 
 function validateClientMenu() {
+  if (editingPlatId) syncModalToPlat();
   readMetaFromForm();
-  syncPlatsFromDom();
   syncCreneauxFromDom();
 
   const errors = [];
@@ -194,7 +503,7 @@ function validateClientMenu() {
   });
 
   meta.commandes.retrait.creneaux.forEach((creneau, index) => {
-    if (!creneau.label?.trim()) {
+    if (creneau.actif !== false && !creneau.label?.trim()) {
       errors.push(`Créneau ${index + 1} : le libellé est obligatoire.`);
     }
   });
@@ -202,124 +511,12 @@ function validateClientMenu() {
   return errors;
 }
 
-function syncPlatsFromDom() {
-  menuState.plats.forEach((plat) => {
-    const card = platsList.querySelector(`[data-plat-id="${plat.id}"]`);
-    if (!card) return;
-
-    plat.nom = card.querySelector('[data-field="nom"]').value.trim();
-    plat.prix = card.querySelector('[data-field="prix"]').value.trim();
-    plat.description = card.querySelector('[data-field="description"]').value.trim();
-    plat.composition = card.querySelector('[data-field="composition"]').value.trim();
-    plat.allergenes = card.querySelector('[data-field="allergenes"]').value.trim();
-    plat.actif = card.querySelector('[data-field="actif"]').checked;
-  });
-}
-
-function syncCreneauxFromDom() {
-  const items = [...creneauxList.querySelectorAll("[data-creneau-index]")];
-  menuState.meta.commandes.retrait.creneaux = items.map((item, index) => ({
-    id: item.querySelector('[data-field="id"]').value.trim() || `creneau-${index + 1}`,
-    label: item.querySelector('[data-field="label"]').value.trim(),
-  }));
-}
-
-function renderCreneaux() {
-  const creneaux = menuState.meta.commandes.retrait.creneaux;
-  creneauxList.innerHTML = creneaux
-    .map(
-      (creneau, index) => `
-      <div class="admin-creneau" data-creneau-index="${index}">
-        <label class="admin-field">
-          <span class="admin-field__label">Code interne</span>
-          <input class="admin-field__input" data-field="id" type="text" value="${escapeHtml(creneau.id)}">
-        </label>
-        <label class="admin-field">
-          <span class="admin-field__label">Libellé affiché</span>
-          <input class="admin-field__input" data-field="label" type="text" value="${escapeHtml(creneau.label)}" placeholder="Lundi — 17h à 18h">
-        </label>
-        <button class="admin-btn admin-btn--danger admin-btn--small" type="button" data-action="remove-creneau">Supprimer</button>
-      </div>
-    `
-    )
-    .join("");
-}
-
-function getPlatPreview(plat) {
-  if (previewUrls.has(plat.id)) return previewUrls.get(plat.id);
-  if (plat.image) return plat.image;
-  return "";
-}
-
-function renderPlats() {
-  platsList.innerHTML = menuState.plats
-    .map((plat) => {
-      const preview = getPlatPreview(plat);
-      return `
-        <article class="admin-plat" data-plat-id="${escapeHtml(plat.id)}">
-          <div class="admin-plat__head">
-            <h3 class="admin-subsection__title">${escapeHtml(plat.nom || "Nouveau plat")}</h3>
-            <label class="admin-switch">
-              <input class="admin-switch__input" data-field="actif" type="checkbox" ${plat.actif !== false ? "checked" : ""}>
-              <span>Visible sur le site</span>
-            </label>
-          </div>
-
-          ${preview ? `<img class="admin-plat__preview" src="${escapeHtml(preview)}" alt="">` : ""}
-
-          <div class="admin-grid admin-grid--2">
-            <label class="admin-field">
-              <span class="admin-field__label">Nom</span>
-              <input class="admin-field__input" data-field="nom" type="text" value="${escapeHtml(plat.nom)}" required>
-            </label>
-            <label class="admin-field">
-              <span class="admin-field__label">Prix (€)</span>
-              <input class="admin-field__input" data-field="prix" type="text" inputmode="decimal" value="${escapeHtml(String(plat.prix ?? ""))}" required>
-            </label>
-          </div>
-
-          <label class="admin-field">
-            <span class="admin-field__label">Description courte</span>
-            <textarea class="admin-field__textarea" data-field="description" rows="2" required>${escapeHtml(plat.description)}</textarea>
-          </label>
-
-          <label class="admin-field">
-            <span class="admin-field__label">Composition</span>
-            <textarea class="admin-field__textarea" data-field="composition" rows="3">${escapeHtml(plat.composition)}</textarea>
-          </label>
-
-          <label class="admin-field">
-            <span class="admin-field__label">Allergènes</span>
-            <textarea class="admin-field__textarea" data-field="allergenes" rows="2">${escapeHtml(plat.allergenes)}</textarea>
-          </label>
-
-          <div class="admin-file">
-            <span class="admin-field__label">Photo du plat</span>
-            <input class="admin-file__input" data-field="file" id="file-${escapeHtml(plat.id)}" type="file" accept="image/*">
-            <label class="admin-file__label" for="file-${escapeHtml(plat.id)}">Parcourir / Choisir une photo</label>
-            ${plat.image ? `<span class="admin-field__help">Photo actuelle : ${escapeHtml(plat.image)}</span>` : ""}
-          </div>
-
-          <button class="admin-btn admin-btn--danger admin-btn--small" type="button" data-action="remove-plat">Supprimer ce plat</button>
-        </article>
-      `;
-    })
-    .join("");
-}
-
-function renderAll() {
-  writeMetaToForm();
-  renderCreneaux();
-  renderPlats();
-}
-
-function fileToBase64(file) {
+async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const result = String(reader.result || "");
-      const base64 = result.includes(",") ? result.split(",")[1] : result;
-      resolve(base64);
+      resolve(result.includes(",") ? result.split(",")[1] : result);
     };
     reader.onerror = () => reject(new Error("Impossible de lire la photo."));
     reader.readAsDataURL(file);
@@ -329,17 +526,14 @@ function fileToBase64(file) {
 async function apiRequest(url, options = {}) {
   const response = await fetch(url, options);
   let payload = {};
-
   try {
     payload = await response.json();
   } catch {
     payload = {};
   }
-
   if (!response.ok || payload.ok === false) {
     throw new Error(payload.error || "Une erreur est survenue.");
   }
-
   return payload;
 }
 
@@ -353,53 +547,46 @@ async function verifySession() {
 
 async function loadMenuData() {
   const response = await fetch("data/menu-semaine.json", { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error("Impossible de charger la carte actuelle.");
-  }
+  if (!response.ok) throw new Error("Impossible de charger la carte actuelle.");
 
   const data = await response.json();
-  const draft = loadDraft();
+  menuState = loadDraft() || deepClone(data);
 
-  menuState = draft || deepClone(data);
+  menuState.meta.commandes ??= { retrait: { creneaux: [] } };
+  menuState.meta.commandes.retrait ??= { creneaux: [] };
+  menuState.meta.commandes.retrait.creneaux ??= [];
+  menuState.plats ??= [];
 
-  if (!menuState.meta.commandes) {
-    menuState.meta.commandes = { retrait: { creneaux: [] } };
-  }
-  if (!menuState.meta.commandes.retrait) {
-    menuState.meta.commandes.retrait = { creneaux: [] };
-  }
-  if (!Array.isArray(menuState.meta.commandes.retrait.creneaux)) {
-    menuState.meta.commandes.retrait.creneaux = [];
-  }
-  if (!Array.isArray(menuState.plats)) {
-    menuState.plats = [];
-  }
+  menuState.meta.commandes.retrait.creneaux =
+    menuState.meta.commandes.retrait.creneaux.map((c) => ({
+      ...c,
+      actif: c.actif !== false,
+    }));
 
+  setPlatViewMode(platViewMode);
   renderAll();
-  setStatus("Carte chargée. Pensez à enregistrer après vos modifications.");
+  setStatus("Carte chargée. N'oubliez pas d'enregistrer vos modifications.");
 }
 
 async function uploadPendingImages() {
-  syncPlatsFromDom();
+  if (editingPlatId) syncModalToPlat();
 
   for (const plat of menuState.plats) {
     const file = pendingFiles.get(plat.id);
     if (!file) continue;
 
-    const dataBase64 = await fileToBase64(file);
     const payload = await apiRequest(API.upload, {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({
         platNom: plat.nom || `plat-${plat.id}`,
         contentType: file.type,
-        dataBase64,
+        dataBase64: await fileToBase64(file),
       }),
     });
 
     plat.image = payload.path;
     pendingFiles.delete(plat.id);
-
     if (previewUrls.has(plat.id)) {
       URL.revokeObjectURL(previewUrls.get(plat.id));
       previewUrls.delete(plat.id);
@@ -421,18 +608,15 @@ async function saveMenu() {
 
   try {
     await uploadPendingImages();
-
     const payload = await apiRequest(API.save, {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({ menu: menuState }),
     });
-
     clearDraft();
     renderAll();
     setStatus(payload.message || "Carte enregistrée.", "success");
   } catch (error) {
-    console.error(error);
     setStatus(error.message, "error");
   } finally {
     saveBtn.disabled = false;
@@ -442,12 +626,10 @@ async function saveMenu() {
 async function handleLogin(event) {
   event.preventDefault();
   loginError.hidden = true;
-
   const password = loginPassword.value.trim();
   if (!password) return;
 
   setToken(password);
-
   try {
     await verifySession();
     showAdmin();
@@ -460,6 +642,7 @@ async function handleLogin(event) {
 }
 
 function handleLogout() {
+  closePlatModal();
   setToken("");
   menuState = null;
   pendingFiles.clear();
@@ -469,92 +652,88 @@ function handleLogout() {
   showLogin();
 }
 
-platsList.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-action='remove-plat']");
-  if (!button) return;
-
-  const card = button.closest("[data-plat-id]");
-  const platId = card?.dataset.platId;
-  if (!platId) return;
-
-  const plat = menuState.plats.find((item) => item.id === platId);
-  const label = plat?.nom || "ce plat";
-  if (!window.confirm(`Supprimer ${label} ?`)) return;
-
-  syncPlatsFromDom();
-  menuState.plats = menuState.plats.filter((item) => item.id !== platId);
-  pendingFiles.delete(platId);
-  if (previewUrls.has(platId)) {
-    URL.revokeObjectURL(previewUrls.get(platId));
-    previewUrls.delete(platId);
-  }
-  renderPlats();
-  saveDraft();
-});
-
-platsList.addEventListener("change", (event) => {
-  const input = event.target.closest('[data-field="file"]');
-  if (!input?.files?.[0]) return;
-
-  const card = input.closest("[data-plat-id]");
-  const platId = card?.dataset.platId;
-  if (!platId) return;
-
-  const file = input.files[0];
+function handlePlatFile(platId, file) {
   if (!file.type.startsWith("image/")) {
     window.alert("Choisissez une image (JPG, PNG, WEBP ou GIF).");
-    input.value = "";
     return;
   }
-
   if (file.size > 5 * 1024 * 1024) {
     window.alert("La photo est trop lourde (maximum 5 Mo).");
-    input.value = "";
     return;
   }
 
   pendingFiles.set(platId, file);
+  if (previewUrls.has(platId)) URL.revokeObjectURL(previewUrls.get(platId));
+  previewUrls.set(platId, URL.createObjectURL(file));
 
-  if (previewUrls.has(platId)) {
-    URL.revokeObjectURL(previewUrls.get(platId));
+  if (editingPlatId === platId) {
+    updateModalPreview(getPlatById(platId));
   }
-
-  const previewUrl = URL.createObjectURL(file);
-  previewUrls.set(platId, previewUrl);
-
-  const preview = card.querySelector(".admin-plat__preview");
-  if (preview) {
-    preview.src = previewUrl;
-  } else {
-    const img = document.createElement("img");
-    img.className = "admin-plat__preview";
-    img.src = previewUrl;
-    img.alt = "";
-    card.insertBefore(img, card.querySelector(".admin-grid"));
-  }
-
+  renderPlats();
   saveDraft();
+}
+
+function togglePlatActif(platId, checked) {
+  const plat = getPlatById(platId);
+  if (!plat) return;
+  plat.actif = checked;
+  renderPlats();
+  saveDraft();
+}
+
+platsList.addEventListener("click", (event) => {
+  if (event.target.closest("[data-stop-prop], .ios-switch")) {
+    const card = event.target.closest("[data-plat-id]");
+    const checkbox = event.target.closest('[data-field="actif"]');
+    if (checkbox && card) {
+      togglePlatActif(card.dataset.platId, checkbox.checked);
+    }
+    return;
+  }
+
+  const editBtn = event.target.closest('[data-action="edit-plat"]');
+  const card = event.target.closest("[data-plat-id]");
+  if (!card) return;
+
+  if (editBtn || platViewMode === "grid") {
+    openPlatModal(card.dataset.platId);
+  }
 });
 
 creneauxList.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-action='remove-creneau']");
-  if (!button) return;
+  const removeBtn = event.target.closest('[data-action="remove-creneau"]');
+  if (removeBtn) {
+    syncCreneauxFromDom();
+    const row = removeBtn.closest("[data-creneau-index]");
+    const index = Number.parseInt(row?.dataset.creneauIndex ?? "-1", 10);
+    if (Number.isFinite(index) && index >= 0) {
+      menuState.meta.commandes.retrait.creneaux.splice(index, 1);
+      renderCreneaux();
+      saveDraft();
+    }
+    return;
+  }
 
-  syncCreneauxFromDom();
-  const item = button.closest("[data-creneau-index]");
-  const index = Number.parseInt(item?.dataset.creneauIndex ?? "-1", 10);
-  if (!Number.isFinite(index) || index < 0) return;
+  const checkbox = event.target.closest('[data-field="actif"]');
+  if (checkbox) {
+    syncCreneauxFromDom();
+    saveDraft();
+  }
+});
 
-  menuState.meta.commandes.retrait.creneaux.splice(index, 1);
-  renderCreneaux();
-  saveDraft();
+creneauxList.addEventListener("input", (event) => {
+  if (event.target.matches('[data-field="id"], [data-field="label"]')) {
+    syncCreneauxFromDom();
+    saveDraft();
+  }
 });
 
 addPlatBtn.addEventListener("click", () => {
-  syncPlatsFromDom();
-  menuState.plats.push(createEmptyPlat());
+  const plat = createEmptyPlat();
+  menuState.plats.push(plat);
   renderPlats();
   saveDraft();
+  openPlatModal(plat.id);
 });
 
 addCreneauBtn.addEventListener("click", () => {
@@ -562,21 +741,87 @@ addCreneauBtn.addEventListener("click", () => {
   menuState.meta.commandes.retrait.creneaux.push({
     id: nextCreneauId(),
     label: "",
+    actif: true,
   });
   renderCreneaux();
   saveDraft();
 });
 
+document.querySelectorAll(".admin-segment__btn").forEach((btn) => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+document.querySelectorAll(".admin-view-toggle__btn").forEach((btn) => {
+  btn.addEventListener("click", () => setPlatViewMode(btn.dataset.view));
+});
+
+platFilter?.addEventListener("change", renderPlats);
+
 Object.values(metaFields).forEach((field) => {
-  field.addEventListener("input", () => {
+  field?.addEventListener("input", () => {
     readMetaFromForm();
     saveDraft();
   });
 });
 
+Object.values(modalFields).forEach((field) => {
+  if (!field || field.tagName === "IMG") return;
+  field.addEventListener("input", () => {
+    syncModalToPlat();
+    if (field === modalFields.nom) {
+      platModalTitle.textContent = modalFields.nom.value.trim() || "Nouveau plat";
+    }
+    saveDraft();
+  });
+  field.addEventListener("change", () => {
+    syncModalToPlat();
+    renderPlats();
+    saveDraft();
+  });
+});
+
+modalPhotoBtn?.addEventListener("click", () => modalFile?.click());
+modalFile?.addEventListener("change", () => {
+  if (modalFile.files?.[0] && editingPlatId) {
+    handlePlatFile(editingPlatId, modalFile.files[0]);
+    modalFile.value = "";
+  }
+});
+
+modalSaveBtn?.addEventListener("click", closePlatModal);
+
+modalDeleteBtn?.addEventListener("click", () => {
+  if (!editingPlatId) return;
+  const plat = getPlatById(editingPlatId);
+  const label = plat?.nom || "ce plat";
+  if (!window.confirm(`Supprimer ${label} ?`)) return;
+
+  menuState.plats = menuState.plats.filter((p) => p.id !== editingPlatId);
+  pendingFiles.delete(editingPlatId);
+  if (previewUrls.has(editingPlatId)) {
+    URL.revokeObjectURL(previewUrls.get(editingPlatId));
+    previewUrls.delete(editingPlatId);
+  }
+  closePlatModal();
+  renderPlats();
+  saveDraft();
+});
+
+platModalClose?.addEventListener("click", closePlatModal);
+platModalOverlay?.addEventListener("click", closePlatModal);
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && platModal?.classList.contains("is-open")) {
+    closePlatModal();
+  }
+});
+
 saveBtn.addEventListener("click", saveMenu);
 loginForm.addEventListener("submit", handleLogin);
 logoutBtn.addEventListener("click", handleLogout);
+
+setupDragDrop(platsList, "plat");
+setupDragDrop(creneauxList, "creneau");
 
 async function initAdmin() {
   const token = getToken();
@@ -584,7 +829,6 @@ async function initAdmin() {
     showLogin();
     return;
   }
-
   try {
     await verifySession();
     showAdmin();

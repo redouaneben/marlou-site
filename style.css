@@ -255,8 +255,8 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
   width: auto;
   height: auto;
-  max-width: clamp(7rem, 22vw, 9.5rem);
-  max-height: clamp(2.75rem, 8vw, 3.75rem);
+  max-width: clamp(17.5rem, 55vw, 23.75rem);
+  max-height: clamp(6.875rem, 20vw, 9.375rem);
   object-fit: contain;
 }
 
@@ -1362,11 +1362,12 @@ body.modal-open {
 
 .cart-bar__chevron {
   display: block;
+  transform: rotate(180deg);
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cart-bar.is-form-open .cart-bar__chevron {
-  transform: rotate(180deg);
+  transform: rotate(0deg);
 }
 
 .cart-form-wrap {
