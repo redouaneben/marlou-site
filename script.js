@@ -108,6 +108,47 @@ window.addEventListener(
   },
   { passive: true }
 );
+
+/* --- Menu mobile (burger) ------------------------------------------------ */
+
+function initMobileNav() {
+  const mobileNav = document.getElementById("mobile-nav");
+  const toggles = document.querySelectorAll(".nav-toggle");
+  if (!mobileNav || !toggles.length) return;
+
+  const closeTargets = mobileNav.querySelectorAll("[data-nav-close]");
+  const links = mobileNav.querySelectorAll(".mobile-nav__link");
+
+  function setNavOpen(open) {
+    mobileNav.classList.toggle("is-open", open);
+    mobileNav.setAttribute("aria-hidden", open ? "false" : "true");
+    document.body.classList.toggle("is-nav-open", open);
+    toggles.forEach((btn) => {
+      btn.setAttribute("aria-expanded", String(open));
+      btn.classList.toggle("is-active", open);
+    });
+  }
+
+  toggles.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setNavOpen(!mobileNav.classList.contains("is-open"));
+    });
+  });
+
+  closeTargets.forEach((el) => {
+    el.addEventListener("click", () => setNavOpen(false));
+  });
+
+  links.forEach((link) => {
+    link.addEventListener("click", () => setNavOpen(false));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && mobileNav.classList.contains("is-open")) {
+      setNavOpen(false);
+    }
+  });
+}
 updateStickyNav();
 
 /* --- Chargement & rendu des données -------------------------------------- */
@@ -215,6 +256,7 @@ function buildProductCatalog() {
           : [{ src: plat.image, label: "Vue principale" }],
         composition: plat.composition,
         allergens: plat.allergenes,
+        portions: plat.portions,
       };
     });
 
@@ -303,6 +345,14 @@ function applySectionMeta() {
   }
 }
 
+function formatPortionsLabel(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const portions = Number.parseInt(raw, 10);
+  if (!Number.isFinite(portions) || portions < 1) return "";
+  return portions === 1 ? "Pour 1 personne" : `Pour ${portions} personnes`;
+}
+
 function createDishCard(item, { isBoutique = false } = {}) {
   const imageSrc = isBoutique
     ? item.variantPreviews?.clair || item.images?.[0]?.src || ""
@@ -312,11 +362,14 @@ function createDishCard(item, { isBoutique = false } = {}) {
   article.className = "dish";
   article.dataset.id = item.id;
 
+  const portionsLabel = !isBoutique ? formatPortionsLabel(item.portions) : "";
+
   article.innerHTML = `
     <img class="dish__image" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(item.nom)}" width="400" height="300" loading="lazy">
     <div class="dish__body">
       <h3 class="dish__title">${escapeHtml(item.nom)}</h3>
       <p class="dish__description">${escapeHtml(item.description)}</p>
+      ${portionsLabel ? `<p class="dish__portions">${escapeHtml(portionsLabel)}</p>` : ""}
       <div class="dish__footer">
         <span class="dish__price">${formatPrice(item.prix)}</span>
         <div class="dish__qty" role="group" aria-label="Quantité ${escapeHtml(item.nom)}">
@@ -365,6 +418,7 @@ const itemModalThumbs = document.getElementById("item-modal-thumbs");
 const itemModalTag = document.getElementById("item-modal-tag");
 const itemModalTitle = document.getElementById("item-modal-title");
 const itemModalPrice = document.getElementById("item-modal-price");
+const itemModalPortions = document.getElementById("item-modal-portions");
 const itemModalDesc = document.getElementById("item-modal-desc");
 const itemModalLabelComposition = document.getElementById("item-modal-label-composition");
 const itemModalComposition = document.getElementById("item-modal-composition");
@@ -521,6 +575,11 @@ function openItemModal(id) {
   itemModalTag.textContent = details.tag;
   itemModalTitle.textContent = getCatalogName(id);
   itemModalPrice.textContent = formatPrice(getCatalogPrice(id) ?? 0);
+  const portionsLabel = details.type === "boutique" ? "" : formatPortionsLabel(details.portions);
+  if (itemModalPortions) {
+    itemModalPortions.textContent = portionsLabel;
+    itemModalPortions.hidden = !portionsLabel;
+  }
   itemModalDesc.textContent = details.description || "";
   itemModalComposition.textContent = details.composition;
 
@@ -1034,6 +1093,8 @@ function showLoadError(message) {
 }
 
 async function initApp() {
+  initMobileNav();
+
   try {
     await loadData();
     buildProductCatalog();

@@ -25,8 +25,37 @@ const platsList = document.getElementById("plats-list");
 const creneauxList = document.getElementById("creneaux-list");
 const addPlatBtn = document.getElementById("add-plat-btn");
 const addCreneauBtn = document.getElementById("add-creneau-btn");
-const weekBadge = document.getElementById("week-badge");
+const addCategoryBtn = document.getElementById("add-category-btn");
+const categoryModal = document.getElementById("category-modal");
+const categoryModalOverlay = document.getElementById("category-modal-overlay");
+const categoryModalClose = document.getElementById("category-modal-close");
+const categoryModalCancel = document.getElementById("category-modal-cancel");
+const categoryModalSubmit = document.getElementById("category-modal-submit");
+const categoryModalInput = document.getElementById("category-modal-input");
+const categoryModalError = document.getElementById("category-modal-error");
+const manageCategoryBtn = document.getElementById("manage-category-btn");
+const categoryManageModal = document.getElementById("category-manage-modal");
+const categoryManageOverlay = document.getElementById("category-manage-overlay");
+const categoryManageClose = document.getElementById("category-manage-close");
+const categoryManageTitle = document.getElementById("category-manage-title");
+const categoryManageIntro = document.getElementById("category-manage-intro");
+const categoryManageIn = document.getElementById("category-manage-in");
+const categoryManageOut = document.getElementById("category-manage-out");
+const categoryManageInEmpty = document.getElementById("category-manage-in-empty");
+const categoryManageOutEmpty = document.getElementById("category-manage-out-empty");
+const categoryManagePicker = document.getElementById("category-manage-picker");
+const categoryManageDeleteBtn = document.getElementById("category-manage-delete");
+
+let managingCategoryId = null;
+/** @type {Set<string>} */
+let protectedCategoryIds = new Set();
 const platFilter = document.getElementById("plat-filter");
+const platCategoryFilter = document.getElementById("plat-category-filter");
+const platFilterMenu = document.getElementById("plat-filter-menu");
+const platFilterBtn = document.getElementById("plat-filter-btn");
+const platFilterPanel = document.getElementById("plat-filter-panel");
+const platFilterBadge = document.getElementById("plat-filter-badge");
+const weekBadge = document.getElementById("week-badge");
 const viewPlats = document.getElementById("view-plats");
 const viewSettings = document.getElementById("view-settings");
 const platModal = document.getElementById("plat-modal");
@@ -41,9 +70,11 @@ const modalFile = document.getElementById("modal-file");
 const modalFields = {
   nom: document.getElementById("modal-nom"),
   prix: document.getElementById("modal-prix"),
+  portions: document.getElementById("modal-portions"),
   description: document.getElementById("modal-description"),
   composition: document.getElementById("modal-composition"),
   allergenes: document.getElementById("modal-allergenes"),
+  categorie: document.getElementById("modal-categorie"),
   actif: document.getElementById("modal-actif"),
   preview: document.getElementById("modal-preview"),
   previewPlaceholder: document.getElementById("modal-preview-placeholder"),
@@ -61,7 +92,7 @@ const metaFields = {
   adresse: document.getElementById("meta-adresse"),
 };
 
-/** @type {{ meta: object, plats: object[] } | null} */
+/** @type {{ meta: object, categories: object[], plats: object[] } | null} */
 let menuState = null;
 
 /** @type {Map<string, File>} */
@@ -168,12 +199,424 @@ function createEmptyPlat() {
     id: nextPlatId(),
     nom: "",
     prix: "",
+    portions: "",
     description: "",
     composition: "",
     allergenes: "",
     image: "",
+    categorieId: "",
     actif: true,
   };
+}
+
+function ensureMenuShape() {
+  if (!menuState) return;
+  menuState.categories ??= [];
+  menuState.plats ??= [];
+  menuState.plats.forEach((plat) => {
+    if (plat.categorieId == null) plat.categorieId = "";
+    if (plat.portions == null) plat.portions = "";
+  });
+}
+
+function parsePortions(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const portions = Number.parseInt(raw, 10);
+  return Number.isFinite(portions) && portions > 0 ? portions : null;
+}
+
+function formatPortionsLabel(value) {
+  const portions = parsePortions(value);
+  if (!portions) return "";
+  return portions === 1 ? "Pour 1 personne" : `Pour ${portions} personnes`;
+}
+
+function nextCategoryId() {
+  const nums = menuState.categories
+    .map((cat) => Number.parseInt(String(cat.id).replace(/^cat-/, ""), 10))
+    .filter(Number.isFinite);
+  return `cat-${(nums.length ? Math.max(...nums) : 0) + 1}`;
+}
+
+function getCategoryById(id) {
+  return menuState.categories.find((cat) => cat.id === id);
+}
+
+function getCategoryLabel(id) {
+  if (!id) return "";
+  return getCategoryById(id)?.nom || "";
+}
+
+function isProtectedCategory(id) {
+  return protectedCategoryIds.has(String(id));
+}
+
+function updateCategoryManageActions() {
+  if (!categoryManageDeleteBtn) return;
+
+  const deletable = Boolean(managingCategoryId && !isProtectedCategory(managingCategoryId));
+  categoryManageDeleteBtn.hidden = !deletable;
+}
+
+function deleteCategory(categoryId) {
+  const category = getCategoryById(categoryId);
+  if (!category || isProtectedCategory(categoryId)) return;
+
+  const label = category.nom;
+  const assignedCount = menuState.plats.filter((plat) => plat.categorieId === categoryId).length;
+  let message = `Supprimer la catégorie « ${label} » ?`;
+  if (assignedCount) {
+    message += `\n\n${assignedCount} plat(s) n'auront plus de catégorie.`;
+  }
+  if (!window.confirm(message)) return;
+
+  menuState.categories = menuState.categories.filter((cat) => cat.id !== categoryId);
+  menuState.plats.forEach((plat) => {
+    if (plat.categorieId === categoryId) plat.categorieId = "";
+  });
+
+  if (platCategoryFilter?.value === categoryId) {
+    platCategoryFilter.value = "all";
+  }
+
+  renderCategoryFilterSelect();
+  renderModalCategorySelect(modalFields.categorie?.value || "");
+
+  if (menuState.categories.length && categoryManageModal?.classList.contains("is-open")) {
+    managingCategoryId = menuState.categories[0].id;
+    renderCategoryManagePicker(managingCategoryId);
+    if (categoryManageTitle) {
+      categoryManageTitle.textContent = getCategoryLabel(managingCategoryId) || "Catégorie";
+    }
+    renderCategoryManageLists();
+    updateCategoryManageActions();
+  } else {
+    closeCategoryManageModal();
+  }
+
+  renderPlats();
+  saveDraft();
+  setStatus(`Catégorie « ${label} » supprimée.`, "success");
+}
+
+function renderCategoryFilterSelect() {
+  if (!platCategoryFilter) return;
+
+  const current = platCategoryFilter.value || "all";
+  platCategoryFilter.innerHTML = [
+    `<option value="all">Toutes les catégories</option>`,
+    `<option value="none">Sans catégorie</option>`,
+    ...menuState.categories.map(
+      (cat) => `<option value="${escapeHtml(cat.id)}">${escapeHtml(cat.nom)}</option>`
+    ),
+  ].join("");
+
+  if ([...platCategoryFilter.options].some((option) => option.value === current)) {
+    platCategoryFilter.value = current;
+  } else {
+    platCategoryFilter.value = "all";
+  }
+
+  updateManageCategoryButton();
+  updateFilterButtonState();
+}
+
+function getActiveFilterCount() {
+  const visibility = platFilter?.value || "all";
+  const category = platCategoryFilter?.value || "all";
+  return (visibility !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0);
+}
+
+function updateFilterButtonState() {
+  const activeCount = getActiveFilterCount();
+
+  if (platFilterBadge) {
+    platFilterBadge.hidden = activeCount === 0;
+    platFilterBadge.textContent = activeCount > 0 ? String(activeCount) : "";
+  }
+
+  if (platFilterBtn) {
+    platFilterBtn.classList.toggle("is-active", activeCount > 0);
+    const parts = [];
+    const visibility = platFilter?.value || "all";
+    const category = platCategoryFilter?.value || "all";
+
+    if (visibility === "active") parts.push("En ligne");
+    else if (visibility === "inactive") parts.push("Masqués");
+
+    if (category === "none") parts.push("Sans catégorie");
+    else if (isRealCategoryFilter(category)) parts.push(getCategoryLabel(category));
+
+    platFilterBtn.title = parts.length ? `Filtres : ${parts.join(" · ")}` : "Filtrer les plats";
+    platFilterBtn.setAttribute(
+      "aria-label",
+      parts.length ? `Filtres actifs : ${parts.join(", ")}` : "Filtrer les plats"
+    );
+  }
+}
+
+function openPlatFilterPanel() {
+  if (!platFilterMenu || !platFilterBtn || !platFilterPanel) return;
+
+  platFilterMenu.classList.add("is-open");
+  platFilterPanel.hidden = false;
+  platFilterBtn.setAttribute("aria-expanded", "true");
+}
+
+function closePlatFilterPanel() {
+  if (!platFilterMenu || !platFilterBtn || !platFilterPanel) return;
+
+  platFilterMenu.classList.remove("is-open");
+  platFilterPanel.hidden = true;
+  platFilterBtn.setAttribute("aria-expanded", "false");
+}
+
+function togglePlatFilterPanel() {
+  if (platFilterMenu?.classList.contains("is-open")) {
+    closePlatFilterPanel();
+  } else {
+    openPlatFilterPanel();
+  }
+}
+
+function renderCategoryOptionsHtml(selectedId = "") {
+  return [
+    `<option value=""${!selectedId ? " selected" : ""}>Sans catégorie</option>`,
+    ...menuState.categories.map(
+      (cat) =>
+        `<option value="${escapeHtml(cat.id)}"${cat.id === selectedId ? " selected" : ""}>${escapeHtml(cat.nom)}</option>`
+    ),
+  ].join("");
+}
+
+function renderModalCategorySelect(selectedId = "") {
+  if (!modalFields.categorie) return;
+  modalFields.categorie.innerHTML = renderCategoryOptionsHtml(selectedId);
+  modalFields.categorie.value = selectedId || "";
+}
+
+function renderPlatCategorySelect(plat, compactClass = "admin-plat-card__category-select") {
+  return `
+    <label class="admin-plat-card__category-field" data-stop-prop>
+      <span class="admin-plat-card__category-label">Catégorie</span>
+      <select class="${compactClass}" data-field="categorie" aria-label="Catégorie de ${escapeHtml(plat.nom || "ce plat")}">
+        ${renderCategoryOptionsHtml(plat.categorieId || "")}
+      </select>
+    </label>
+  `;
+}
+
+function setPlatCategory(platId, categorieId) {
+  const plat = getPlatById(platId);
+  if (!plat) return;
+
+  plat.categorieId = categorieId || "";
+  if (editingPlatId === platId && modalFields.categorie) {
+    modalFields.categorie.value = plat.categorieId;
+  }
+
+  renderPlats();
+  if (categoryManageModal?.classList.contains("is-open")) {
+    renderCategoryManageLists();
+  }
+  saveDraft();
+}
+
+function isRealCategoryFilter(value) {
+  return Boolean(value && value !== "all" && value !== "none");
+}
+
+function updateManageCategoryButton() {
+  if (!manageCategoryBtn) return;
+
+  const catId = platCategoryFilter?.value;
+  if (isRealCategoryFilter(catId)) {
+    const label = getCategoryLabel(catId) || "cette catégorie";
+    manageCategoryBtn.title = `Gérer « ${label} »`;
+    manageCategoryBtn.setAttribute("aria-label", `Gérer la catégorie ${label}`);
+  } else {
+    manageCategoryBtn.title = "Gérer les catégories";
+    manageCategoryBtn.setAttribute("aria-label", "Gérer les catégories");
+  }
+}
+
+function renderCategoryManagePicker(selectedId = "") {
+  if (!categoryManagePicker) return;
+
+  categoryManagePicker.innerHTML = menuState.categories
+    .map(
+      (cat) =>
+        `<option value="${escapeHtml(cat.id)}"${cat.id === selectedId ? " selected" : ""}>${escapeHtml(cat.nom)}</option>`
+    )
+    .join("");
+  categoryManagePicker.disabled = menuState.categories.length === 0;
+}
+
+function resolveCategoryManageId(preferredId = null) {
+  if (isRealCategoryFilter(preferredId)) return preferredId;
+  if (isRealCategoryFilter(platCategoryFilter?.value)) return platCategoryFilter.value;
+  return menuState.categories[0]?.id || "";
+}
+
+function renderCategoryManageLists() {
+  if (!managingCategoryId || !categoryManageIn || !categoryManageOut) return;
+
+  const inCategory = menuState.plats.filter((plat) => plat.categorieId === managingCategoryId);
+  const outCategory = menuState.plats.filter((plat) => plat.categorieId !== managingCategoryId);
+
+  categoryManageIn.innerHTML = inCategory
+    .map(
+      (plat) => `
+      <li class="category-manage-item">
+        <span class="category-manage-item__name">${escapeHtml(plat.nom || "Plat sans nom")}</span>
+        <button type="button" class="admin-btn admin-btn--soft" data-action="remove-from-category" data-plat-id="${escapeHtml(plat.id)}">Retirer</button>
+      </li>
+    `
+    )
+    .join("");
+
+  categoryManageOut.innerHTML = outCategory
+    .map((plat) => {
+      const currentLabel = getCategoryLabel(plat.categorieId) || "Sans catégorie";
+      return `
+      <li class="category-manage-item">
+        <span class="category-manage-item__name">
+          ${escapeHtml(plat.nom || "Plat sans nom")}
+          <span class="category-manage-item__meta">${escapeHtml(currentLabel)}</span>
+        </span>
+        <button type="button" class="admin-btn admin-btn--primary" data-action="add-to-category" data-plat-id="${escapeHtml(plat.id)}">Ajouter</button>
+      </li>
+    `;
+    })
+    .join("");
+
+  if (categoryManageInEmpty) categoryManageInEmpty.hidden = inCategory.length > 0;
+  if (categoryManageOutEmpty) categoryManageOutEmpty.hidden = outCategory.length > 0;
+  if (categoryManageIntro) {
+    categoryManageIntro.textContent = `${inCategory.length} plat(s) dans cette catégorie · ${outCategory.length} disponible(s) à ajouter.`;
+  }
+
+  updateCategoryManageActions();
+}
+
+function openCategoryManageModal(preferredCategoryId = null) {
+  if (!categoryManageModal) return;
+
+  const categoryId = resolveCategoryManageId(preferredCategoryId);
+  if (!categoryId) {
+    setStatus("Créez d'abord une catégorie avec le bouton +.", "error");
+    return;
+  }
+
+  managingCategoryId = categoryId;
+  renderCategoryManagePicker(categoryId);
+  if (categoryManageTitle) {
+    categoryManageTitle.textContent = getCategoryLabel(categoryId) || "Catégorie";
+  }
+  renderCategoryManageLists();
+  updateCategoryManageActions();
+
+  categoryManageModal.hidden = false;
+  categoryManageModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-modal-open");
+  requestAnimationFrame(() => categoryManageModal.classList.add("is-open"));
+}
+
+function closeCategoryManageModal() {
+  if (!categoryManageModal) return;
+
+  managingCategoryId = null;
+  categoryManageModal.classList.remove("is-open");
+  categoryManageModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-modal-open");
+  setTimeout(() => {
+    categoryManageModal.hidden = true;
+  }, 350);
+}
+
+function getFilteredPlats() {
+  const visibility = platFilter?.value || "all";
+  const category = platCategoryFilter?.value || "all";
+
+  return menuState.plats.filter((plat) => {
+    if (visibility === "active" && plat.actif === false) return false;
+    if (visibility === "inactive" && plat.actif !== false) return false;
+
+    const categorieId = plat.categorieId || "";
+    if (category === "none" && categorieId) return false;
+    if (category !== "all" && category !== "none" && categorieId !== category) return false;
+
+    return true;
+  });
+}
+
+function showCategoryModalError(message) {
+  if (!categoryModalError) return;
+  if (!message) {
+    categoryModalError.hidden = true;
+    categoryModalError.textContent = "";
+    return;
+  }
+  categoryModalError.hidden = false;
+  categoryModalError.textContent = message;
+}
+
+function openCategoryModal() {
+  if (!categoryModal) return;
+
+  showCategoryModalError("");
+  if (categoryModalInput) categoryModalInput.value = "";
+
+  categoryModal.hidden = false;
+  categoryModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-modal-open");
+  requestAnimationFrame(() => categoryModal.classList.add("is-open"));
+  categoryModalInput?.focus();
+}
+
+function closeCategoryModal() {
+  if (!categoryModal) return;
+
+  categoryModal.classList.remove("is-open");
+  categoryModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-modal-open");
+  showCategoryModalError("");
+  setTimeout(() => {
+    categoryModal.hidden = true;
+  }, 350);
+}
+
+function submitCategoryModal() {
+  const nom = categoryModalInput?.value.trim() || "";
+  if (!nom) {
+    showCategoryModalError("Indiquez un nom pour la catégorie.");
+    categoryModalInput?.focus();
+    return;
+  }
+
+  const exists = menuState.categories.some(
+    (cat) => cat.nom.localeCompare(nom, "fr", { sensitivity: "accent" }) === 0
+  );
+  if (exists) {
+    showCategoryModalError("Cette catégorie existe déjà.");
+    categoryModalInput?.focus();
+    return;
+  }
+
+  const id = nextCategoryId();
+  menuState.categories.push({ id, nom });
+  renderCategoryFilterSelect();
+  renderModalCategorySelect(modalFields.categorie?.value || "");
+  if (platCategoryFilter) platCategoryFilter.value = id;
+  saveDraft();
+  renderPlats();
+  closeCategoryModal();
+  setStatus(`Catégorie « ${nom} » ajoutée.`, "success");
+}
+
+function handleAddCategory() {
+  openCategoryModal();
 }
 
 function readMetaFromForm() {
@@ -204,15 +647,6 @@ function writeMetaToForm() {
 function getPlatPreview(plat) {
   if (previewUrls.has(plat.id)) return previewUrls.get(plat.id);
   return plat.image || "";
-}
-
-function getFilteredPlats() {
-  const filter = platFilter?.value || "all";
-  return menuState.plats.filter((plat) => {
-    if (filter === "active") return plat.actif !== false;
-    if (filter === "inactive") return plat.actif === false;
-    return true;
-  });
 }
 
 function renderIosSwitch(checked, label = "", compact = false) {
@@ -246,7 +680,9 @@ function renderPlatCard(plat) {
           <h3 class="admin-plat-card__name">${escapeHtml(plat.nom || "Nouveau plat")}</h3>
           ${renderIosSwitch(plat.actif !== false, "", true)}
         </div>
+        ${renderPlatCategorySelect(plat)}
         <p class="admin-plat-card__price">${formatPrice(plat.prix)}</p>
+        ${formatPortionsLabel(plat.portions) ? `<p class="admin-plat-card__portions">${escapeHtml(formatPortionsLabel(plat.portions))}</p>` : ""}
         <p class="admin-plat-card__desc">${escapeHtml(plat.description || "Ajoutez une description…")}</p>
         ${renderStatusPill(plat.actif !== false)}
       </div>
@@ -267,7 +703,10 @@ function renderPlatRow(plat) {
       }
       <div class="admin-plat-row__info">
         <p class="admin-plat-row__name">${escapeHtml(plat.nom || "Nouveau plat")}</p>
-        <p class="admin-plat-row__meta">${formatPrice(plat.prix)} · ${escapeHtml(plat.description || "—")}</p>
+        <p class="admin-plat-row__meta">${formatPrice(plat.prix)}${formatPortionsLabel(plat.portions) ? ` · ${escapeHtml(formatPortionsLabel(plat.portions))}` : ""} · ${escapeHtml(plat.description || "—")}</p>
+        <select class="admin-plat-row__category-select" data-field="categorie" data-stop-prop aria-label="Catégorie de ${escapeHtml(plat.nom || "ce plat")}">
+          ${renderCategoryOptionsHtml(plat.categorieId || "")}
+        </select>
       </div>
       ${renderStatusPill(plat.actif !== false)}
       ${renderIosSwitch(plat.actif !== false, "", true)}
@@ -282,8 +721,13 @@ function renderPlats() {
   platsList.className = `admin-plats admin-plats--${platViewMode}`;
   const plats = getFilteredPlats();
 
+  if (!menuState.plats.length) {
+    platsList.innerHTML = `<p class="admin-empty">Aucun plat pour le moment. Ajoutez-en un avec le bouton ci-dessus.</p>`;
+    return;
+  }
+
   if (!plats.length) {
-    platsList.innerHTML = `<p class="admin-empty">Aucun plat dans cette vue. Ajoutez-en un ou changez le filtre.</p>`;
+    platsList.innerHTML = `<p class="admin-empty">Aucun plat ne correspond à ces filtres. Modifiez la visibilité ou la catégorie.</p>`;
     return;
   }
 
@@ -320,6 +764,7 @@ function renderCreneaux() {
 
 function renderAll() {
   writeMetaToForm();
+  renderCategoryFilterSelect();
   renderPlats();
   renderCreneaux();
 }
@@ -364,9 +809,11 @@ function syncModalToPlat() {
 
   plat.nom = modalFields.nom.value.trim();
   plat.prix = modalFields.prix.value.trim();
+  plat.portions = parsePortions(modalFields.portions?.value) ?? "";
   plat.description = modalFields.description.value.trim();
   plat.composition = modalFields.composition.value.trim();
   plat.allergenes = modalFields.allergenes.value.trim();
+  plat.categorieId = modalFields.categorie?.value || "";
   plat.actif = modalFields.actif.checked;
 }
 
@@ -391,9 +838,11 @@ function openPlatModal(id) {
   platModalTitle.textContent = plat.nom || "Nouveau plat";
   modalFields.nom.value = plat.nom || "";
   modalFields.prix.value = plat.prix ?? "";
+  modalFields.portions.value = parsePortions(plat.portions) ?? "";
   modalFields.description.value = plat.description || "";
   modalFields.composition.value = plat.composition || "";
   modalFields.allergenes.value = plat.allergenes || "";
+  renderModalCategorySelect(plat.categorieId || "");
   modalFields.actif.checked = plat.actif !== false;
   updateModalPreview(plat);
 
@@ -429,7 +878,12 @@ function reorderItems(array, fromId, toId, getId) {
 function setupDragDrop(container, type) {
   container.addEventListener("dragstart", (event) => {
     const item = event.target.closest(type === "plat" ? "[data-plat-id]" : "[data-creneau-index]");
-    if (!item || event.target.closest("[data-stop-prop], .ios-switch, button, input, label.admin-field")) {
+    if (
+      !item ||
+      event.target.closest(
+        "[data-stop-prop], .ios-switch, button, input, select, label.admin-field, label.admin-plat-card__category-field"
+      )
+    ) {
       event.preventDefault();
       return;
     }
@@ -508,6 +962,9 @@ function validateClientMenu() {
     const prix = Number.parseFloat(String(plat.prix).replace(",", "."));
     if (!Number.isFinite(prix) || prix < 0) errors.push(`${label} : le prix est invalide.`);
     if (!plat.description?.trim()) errors.push(`${label} : la description est obligatoire.`);
+    if (String(plat.portions ?? "").trim() && !parsePortions(plat.portions)) {
+      errors.push(`${label} : indiquez un nombre de personnes valide (1 minimum).`);
+    }
     if (!plat.image?.trim() && !pendingFiles.has(plat.id)) {
       errors.push(`${label} : ajoutez une photo.`);
     } else if (
@@ -637,12 +1094,14 @@ async function loadMenuData() {
   if (!response.ok) throw new Error("Impossible de charger la carte actuelle.");
 
   const data = await response.json();
+  protectedCategoryIds = new Set((data.categories || []).map((cat) => String(cat.id)));
   menuState = loadDraft() || deepClone(data);
 
   menuState.meta.commandes ??= { retrait: { creneaux: [] } };
   menuState.meta.commandes.retrait ??= { creneaux: [] };
   menuState.meta.commandes.retrait.creneaux ??= [];
   menuState.plats ??= [];
+  ensureMenuShape();
 
   menuState.meta.commandes.retrait.creneaux =
     menuState.meta.commandes.retrait.creneaux.map((c) => ({
@@ -701,7 +1160,11 @@ async function saveMenu() {
       body: JSON.stringify({ menu: menuState }),
     });
     clearDraft();
+    protectedCategoryIds = new Set(menuState.categories.map((cat) => String(cat.id)));
     renderAll();
+    if (categoryManageModal?.classList.contains("is-open")) {
+      updateCategoryManageActions();
+    }
     setStatus(payload.message || "Carte enregistrée.", "success");
   } catch (error) {
     setStatus(error.message, "error");
@@ -776,8 +1239,15 @@ function togglePlatActif(platId, checked) {
   saveDraft();
 }
 
+platsList.addEventListener("change", (event) => {
+  const select = event.target.closest('[data-field="categorie"]');
+  const card = event.target.closest("[data-plat-id]");
+  if (!select || !card) return;
+  setPlatCategory(card.dataset.platId, select.value);
+});
+
 platsList.addEventListener("click", (event) => {
-  if (event.target.closest("[data-stop-prop], .ios-switch")) {
+  if (event.target.closest("[data-stop-prop], .ios-switch, [data-field='categorie']")) {
     const card = event.target.closest("[data-plat-id]");
     const checkbox = event.target.closest('[data-field="actif"]');
     if (checkbox && card) {
@@ -850,8 +1320,6 @@ document.querySelectorAll(".admin-view-toggle__btn").forEach((btn) => {
   btn.addEventListener("click", () => setPlatViewMode(btn.dataset.view));
 });
 
-platFilter?.addEventListener("change", renderPlats);
-
 Object.values(metaFields).forEach((field) => {
   field?.addEventListener("input", () => {
     readMetaFromForm();
@@ -873,6 +1341,78 @@ Object.values(modalFields).forEach((field) => {
     renderPlats();
     saveDraft();
   });
+});
+
+platFilterBtn?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  togglePlatFilterPanel();
+});
+platFilterPanel?.addEventListener("click", (event) => event.stopPropagation());
+platFilter?.addEventListener("change", () => {
+  renderPlats();
+  updateFilterButtonState();
+});
+platCategoryFilter?.addEventListener("change", () => {
+  renderPlats();
+  updateManageCategoryButton();
+  updateFilterButtonState();
+});
+document.addEventListener("click", () => {
+  if (platFilterMenu?.classList.contains("is-open")) {
+    closePlatFilterPanel();
+  }
+});
+addCategoryBtn?.addEventListener("click", handleAddCategory);
+manageCategoryBtn?.addEventListener("click", () => {
+  openCategoryManageModal(platCategoryFilter?.value);
+});
+categoryManagePicker?.addEventListener("change", () => {
+  managingCategoryId = categoryManagePicker.value;
+  if (categoryManageTitle) {
+    categoryManageTitle.textContent = getCategoryLabel(managingCategoryId) || "Catégorie";
+  }
+  renderCategoryManageLists();
+});
+categoryManageDeleteBtn?.addEventListener("click", () => {
+  if (managingCategoryId) deleteCategory(managingCategoryId);
+});
+categoryManageClose?.addEventListener("click", closeCategoryManageModal);
+categoryManageOverlay?.addEventListener("click", closeCategoryManageModal);
+categoryManageModal?.addEventListener("click", (event) => {
+  const addBtn = event.target.closest('[data-action="add-to-category"]');
+  const removeBtn = event.target.closest('[data-action="remove-from-category"]');
+  if (addBtn) {
+    setPlatCategory(addBtn.dataset.platId, managingCategoryId);
+    return;
+  }
+  if (removeBtn) {
+    setPlatCategory(removeBtn.dataset.platId, "");
+  }
+});
+categoryModalClose?.addEventListener("click", closeCategoryModal);
+categoryModalCancel?.addEventListener("click", closeCategoryModal);
+categoryModalOverlay?.addEventListener("click", closeCategoryModal);
+categoryModalSubmit?.addEventListener("click", submitCategoryModal);
+categoryModalInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    submitCategoryModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && platFilterMenu?.classList.contains("is-open")) {
+    closePlatFilterPanel();
+    platFilterBtn?.focus();
+    return;
+  }
+  if (event.key === "Escape" && categoryManageModal?.classList.contains("is-open")) {
+    closeCategoryManageModal();
+    return;
+  }
+  if (event.key === "Escape" && categoryModal?.classList.contains("is-open")) {
+    closeCategoryModal();
+  }
 });
 
 modalPhotoBtn?.addEventListener("click", () => modalFile?.click());

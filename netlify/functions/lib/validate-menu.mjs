@@ -14,21 +14,39 @@ function parsePrix(value) {
   return Number.isFinite(prix) ? prix : NaN;
 }
 
+function parsePortions(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const portions = Number.parseInt(raw, 10);
+  return Number.isFinite(portions) && portions > 0 ? portions : "";
+}
+
 export function sanitizeMenu(menu) {
   const meta = menu?.meta || {};
   const commandes = meta.commandes || {};
   const retrait = commandes.retrait || {};
+
+  const categories = Array.isArray(menu?.categories)
+    ? menu.categories
+        .map((cat, index) => ({
+          id: String(cat?.id ?? `cat-${index + 1}`).trim(),
+          nom: String(cat?.nom ?? "").trim(),
+        }))
+        .filter((cat) => cat.id && cat.nom)
+    : [];
 
   const plats = Array.isArray(menu?.plats)
     ? menu.plats.map((plat, index) => ({
         id: String(plat?.id ?? index + 1),
         nom: String(plat?.nom ?? "").trim(),
         prix: parsePrix(plat?.prix),
+        portions: parsePortions(plat?.portions),
         description: String(plat?.description ?? "").trim(),
         composition: String(plat?.composition ?? "").trim(),
         allergenes: String(plat?.allergenes ?? "").trim(),
         image: String(plat?.image ?? "").trim(),
         actif: plat?.actif !== false,
+        categorieId: String(plat?.categorieId ?? "").trim(),
       }))
     : [];
 
@@ -43,6 +61,7 @@ export function sanitizeMenu(menu) {
     : [];
 
   return {
+    categories,
     meta: {
       semaine: String(meta.semaine ?? "").trim(),
       titre: String(meta.titre ?? "La Carte de la Semaine").trim(),
@@ -85,11 +104,19 @@ export function validateMenu(menu) {
     errors.push("Ajoutez au moins un plat.");
   }
 
+  const categoryIds = new Set(data.categories.map((cat) => cat.id));
+
   data.plats.forEach((plat, index) => {
     const label = plat.nom || `Plat ${index + 1}`;
     if (!plat.nom) errors.push(`${label} : le nom est obligatoire.`);
+    if (plat.categorieId && !categoryIds.has(plat.categorieId)) {
+      errors.push(`${label} : catégorie invalide.`);
+    }
     if (!Number.isFinite(plat.prix) || plat.prix < 0) {
       errors.push(`${label} : le prix est invalide.`);
+    }
+    if (String(plat.portions ?? "").trim() && !parsePortions(plat.portions)) {
+      errors.push(`${label} : le nombre de personnes est invalide.`);
     }
     if (!plat.description) errors.push(`${label} : la description est obligatoire.`);
     if (!plat.image) {

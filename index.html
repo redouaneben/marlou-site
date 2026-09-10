@@ -26,6 +26,13 @@
       <a class="header__brand" href="#accueil">
         <img class="header__brand-logo" src="assets/Logo/logoo.png" alt="Les Bons Plats de Marlou">
       </a>
+      <button type="button" class="nav-toggle" id="nav-toggle-header" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span class="nav-toggle__lines" aria-hidden="true">
+          <span class="nav-toggle__line"></span>
+          <span class="nav-toggle__line"></span>
+          <span class="nav-toggle__line"></span>
+        </span>
+      </button>
       <nav class="header__nav" aria-label="Navigation">
         <a class="header__nav-link" href="#comment-ca-marche">Comment ça marche</a>
         <a class="header__nav-link" href="#carte-de-la-semaine">La carte</a>
@@ -56,6 +63,22 @@
         <a class="sticky-nav__link" href="#faq">FAQ</a>
       </nav>
     </div>
+  </div>
+
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+    <div class="mobile-nav__backdrop" data-nav-close tabindex="-1"></div>
+    <nav class="mobile-nav__panel" aria-label="Navigation mobile">
+      <div class="mobile-nav__head">
+        <p class="mobile-nav__title">Les Bons Plats de Marlou</p>
+        <button type="button" class="mobile-nav__close" data-nav-close aria-label="Fermer le menu">×</button>
+      </div>
+      <ul class="mobile-nav__list">
+        <li><a class="mobile-nav__link" href="#comment-ca-marche">Comment ça marche</a></li>
+        <li><a class="mobile-nav__link" href="#carte-de-la-semaine">La carte</a></li>
+        <li><a class="mobile-nav__link" href="#la-boutique">La boutique</a></li>
+        <li><a class="mobile-nav__link" href="#faq">FAQ</a></li>
+      </ul>
+    </nav>
   </div>
 
   <section class="section section--how-it-works" id="comment-ca-marche" aria-labelledby="how-it-works-title">
@@ -217,6 +240,7 @@
           <p class="item-modal__tag" id="item-modal-tag"></p>
           <h2 class="item-modal__title" id="item-modal-title"></h2>
           <p class="item-modal__price" id="item-modal-price"></p>
+          <p class="item-modal__portions" id="item-modal-portions" hidden></p>
           <p class="item-modal__desc" id="item-modal-desc"></p>
 
           <div class="item-modal__variants item-modal__block--hidden" id="item-modal-variants">

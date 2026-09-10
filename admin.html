@@ -67,15 +67,52 @@
                 <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="1.5" y="3" width="15" height="2.5" rx="1.25" fill="currentColor"/><rect x="1.5" y="8" width="15" height="2.5" rx="1.25" fill="currentColor"/><rect x="1.5" y="13" width="15" height="2.5" rx="1.25" fill="currentColor"/></svg>
               </button>
             </div>
-            <select class="admin-select" id="plat-filter" aria-label="Filtrer les plats">
-              <option value="all">Tous les plats</option>
-              <option value="active">Visibles sur le site</option>
-              <option value="inactive">Masqués</option>
-            </select>
+            <div class="admin-toolbar__filters">
+              <div class="admin-filter-menu" id="plat-filter-menu">
+                <button
+                  type="button"
+                  class="admin-filter-menu__trigger"
+                  id="plat-filter-btn"
+                  aria-expanded="false"
+                  aria-controls="plat-filter-panel"
+                  aria-haspopup="true"
+                  title="Filtrer les plats"
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                    <path d="M2.5 4h13M5 9h8M7.5 14h3" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                  </svg>
+                  <span class="admin-filter-menu__badge" id="plat-filter-badge" hidden aria-hidden="true"></span>
+                </button>
+                <div class="admin-filter-menu__panel" id="plat-filter-panel" hidden>
+                  <label class="admin-filter-menu__field">
+                    <span class="admin-filter-menu__label">Visibilité</span>
+                    <select class="admin-select admin-select--field" id="plat-filter" aria-label="Filtrer par visibilité">
+                      <option value="all">Tous les plats</option>
+                      <option value="active">En ligne</option>
+                      <option value="inactive">Masqués</option>
+                    </select>
+                  </label>
+                  <label class="admin-filter-menu__field">
+                    <span class="admin-filter-menu__label">Catégorie</span>
+                    <select class="admin-select admin-select--field" id="plat-category-filter" aria-label="Filtrer par catégorie">
+                      <option value="all">Toutes les catégories</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div class="admin-category-actions" role="group" aria-label="Actions catégories">
+                <button type="button" class="admin-icon-btn" id="add-category-btn" title="Nouvelle catégorie" aria-label="Nouvelle catégorie">
+                  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+                </button>
+                <button type="button" class="admin-icon-btn" id="manage-category-btn" title="Gérer les catégories" aria-label="Gérer les catégories">
+                  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M12.2 2.8a1.6 1.6 0 0 1 2.3 2.3l-8.4 8.4-3.1 1 1-3.1 8.2-8.6Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10.5 4.5l3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
           <button class="admin-btn admin-btn--primary" type="button" id="add-plat-btn">+ Nouveau plat</button>
         </div>
-        <p class="admin-hint">Glissez-déposez pour réorganiser l'ordre d'affichage sur le site.</p>
+        <p class="admin-hint">Glissez-déposez pour réorganiser. Assignez une catégorie sur chaque carte ou via l’icône crayon.</p>
         <div class="admin-plats admin-plats--grid" id="plats-list"></div>
       </section>
 
@@ -166,6 +203,68 @@
       </button>
     </footer>
 
+    <div class="admin-modal admin-modal--compact" id="category-modal" aria-hidden="true" hidden>
+      <div class="admin-modal__overlay" id="category-modal-overlay"></div>
+      <div class="admin-modal__panel" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
+        <header class="admin-modal__head">
+          <div class="admin-modal__head-main">
+            <p class="admin-modal__eyebrow">Organisation</p>
+            <h2 class="admin-modal__title" id="category-modal-title">Nouvelle catégorie</h2>
+          </div>
+          <button type="button" class="admin-modal__close" id="category-modal-close" aria-label="Fermer">×</button>
+        </header>
+        <div class="admin-modal__body">
+          <p class="admin-modal__intro">Regroupez vos plats pour mieux les visualiser et filtrer votre carte.</p>
+          <label class="admin-field">
+            <span class="admin-field__label">Nom de la catégorie</span>
+            <input class="admin-field__input" id="category-modal-input" type="text" maxlength="40" placeholder="Ex. Plats du jour, Desserts…" autocomplete="off">
+          </label>
+          <p class="admin-alert admin-alert--error" id="category-modal-error" hidden></p>
+          <div class="admin-modal__actions admin-modal__actions--end">
+            <button type="button" class="admin-btn admin-btn--soft" id="category-modal-cancel">Annuler</button>
+            <button type="button" class="admin-btn admin-btn--primary" id="category-modal-submit">Créer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-modal admin-modal--category-manage" id="category-manage-modal" aria-hidden="true" hidden>
+      <div class="admin-modal__overlay" id="category-manage-overlay"></div>
+      <div class="admin-modal__panel" role="dialog" aria-modal="true" aria-labelledby="category-manage-title">
+        <header class="admin-modal__head">
+          <div class="admin-modal__head-main">
+            <p class="admin-modal__eyebrow">Organisation</p>
+            <h2 class="admin-modal__title" id="category-manage-title">Gérer la catégorie</h2>
+          </div>
+          <button type="button" class="admin-modal__close" id="category-manage-close" aria-label="Fermer">×</button>
+        </header>
+        <div class="admin-modal__body category-manage-body">
+          <div class="category-manage-toolbar">
+            <label class="admin-field category-manage-picker">
+              <span class="admin-field__label">Catégorie</span>
+              <select class="admin-select admin-select--field" id="category-manage-picker" aria-label="Choisir la catégorie à gérer"></select>
+            </label>
+            <button type="button" class="admin-btn admin-btn--danger" id="category-manage-delete" hidden>Supprimer la catégorie</button>
+          </div>
+          <p class="admin-modal__intro" id="category-manage-intro">Ajoutez ou retirez des plats de cette catégorie.</p>
+
+          <div class="category-manage-columns">
+            <section class="category-manage-section">
+              <h3 class="category-manage-section__title">Dans cette catégorie</h3>
+              <ul class="category-manage-list" id="category-manage-in"></ul>
+              <p class="category-manage-empty" id="category-manage-in-empty" hidden>Aucun plat dans cette catégorie.</p>
+            </section>
+
+            <section class="category-manage-section">
+              <h3 class="category-manage-section__title">Ajouter un plat</h3>
+              <ul class="category-manage-list" id="category-manage-out"></ul>
+              <p class="category-manage-empty" id="category-manage-out-empty" hidden>Tous les plats sont déjà dans cette catégorie.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="admin-modal" id="plat-modal" aria-hidden="true" hidden>
       <div class="admin-modal__overlay" id="plat-modal-overlay"></div>
       <div class="admin-modal__panel" role="dialog" aria-modal="true" aria-labelledby="plat-modal-title">
@@ -196,6 +295,16 @@
             <label class="admin-field">
               <span class="admin-field__label">Prix (€)</span>
               <input class="admin-field__input" id="modal-prix" type="text" inputmode="decimal" required>
+            </label>
+            <label class="admin-field">
+              <span class="admin-field__label">Pour combien de personnes</span>
+              <input class="admin-field__input" id="modal-portions" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex. 2">
+            </label>
+            <label class="admin-field">
+              <span class="admin-field__label">Catégorie</span>
+              <select class="admin-field__input admin-select admin-select--field" id="modal-categorie">
+                <option value="">Sans catégorie</option>
+              </select>
             </label>
           </div>
           <label class="admin-field">
