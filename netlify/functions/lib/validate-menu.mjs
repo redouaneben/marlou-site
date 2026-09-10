@@ -1,3 +1,14 @@
+const IMAGE_PATH =
+  /^assets\/Plats\/[a-zA-Z0-9àâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ \-&_]+\.(jpg|jpeg|png|webp|gif)$/i;
+
+function isValidImagePath(imagePath) {
+  if (!imagePath) return false;
+  const path = String(imagePath).trim();
+  if (path.includes("..") || path.includes("\\") || path.includes("//")) return false;
+  if (!path.startsWith("assets/Plats/")) return false;
+  return IMAGE_PATH.test(path);
+}
+
 function parsePrix(value) {
   const prix = Number.parseFloat(String(value ?? "").replace(",", "."));
   return Number.isFinite(prix) ? prix : NaN;
@@ -81,7 +92,11 @@ export function validateMenu(menu) {
       errors.push(`${label} : le prix est invalide.`);
     }
     if (!plat.description) errors.push(`${label} : la description est obligatoire.`);
-    if (!plat.image) errors.push(`${label} : ajoutez une photo.`);
+    if (!plat.image) {
+      errors.push(`${label} : ajoutez une photo.`);
+    } else if (!isValidImagePath(plat.image)) {
+      errors.push(`${label} : chemin d'image invalide.`);
+    }
   });
 
   data.meta.commandes.retrait.creneaux.forEach((creneau, index) => {

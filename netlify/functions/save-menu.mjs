@@ -3,6 +3,8 @@ import { writeFile } from "./lib/github.mjs";
 import { validateMenu } from "./lib/validate-menu.mjs";
 import { jsonResponse } from "./lib/response.mjs";
 
+const MAX_BODY_BYTES = 500 * 1024;
+
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { ok: false, error: "Méthode non autorisée." });
@@ -10,6 +12,10 @@ export async function handler(event) {
 
   if (!isAuthorized(event)) {
     return unauthorizedResponse();
+  }
+
+  if ((event.body?.length ?? 0) > MAX_BODY_BYTES) {
+    return jsonResponse(413, { ok: false, error: "Données trop volumineuses." });
   }
 
   let payload;
@@ -41,7 +47,7 @@ export async function handler(event) {
     console.error(error);
     return jsonResponse(500, {
       ok: false,
-      error: error.message || "Erreur lors de l'enregistrement.",
+      error: "Une erreur interne est survenue.",
     });
   }
 }

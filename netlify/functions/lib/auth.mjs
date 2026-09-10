@@ -1,14 +1,21 @@
+import { timingSafeEqual, createHash } from "node:crypto";
+import { jsonResponse } from "./response.mjs";
+
+function hashSecret(value) {
+  return createHash("sha256").update(String(value)).digest();
+}
+
 export function getBearerToken(request) {
   const headers = request.headers;
-  let authHeader = '';
+  let authHeader = "";
 
-  if (typeof headers.get === 'function') {
-    authHeader = headers.get('authorization') || headers.get('Authorization') || '';
+  if (typeof headers.get === "function") {
+    authHeader = headers.get("authorization") || headers.get("Authorization") || "";
   } else if (headers) {
-    authHeader = headers['authorization'] || headers['Authorization'] || '';
+    authHeader = headers["authorization"] || headers["Authorization"] || "";
   }
 
-  if (!authHeader.startsWith('Bearer ')) {
+  if (!authHeader.startsWith("Bearer ")) {
     return null;
   }
   return authHeader.substring(7);
@@ -17,12 +24,20 @@ export function getBearerToken(request) {
 export function isAuthorized(request) {
   const token = getBearerToken(request);
   const adminPassword = process.env.ADMIN_PASSWORD;
-  return token && adminPassword && token === adminPassword;
+  if (!token || !adminPassword) {
+    return false;
+  }
+
+  const tokenHash = hashSecret(token);
+  const expectedHash = hashSecret(adminPassword);
+
+  if (tokenHash.length !== expectedHash.length) {
+    return false;
+  }
+
+  return timingSafeEqual(tokenHash, expectedHash);
 }
 
 export function unauthorizedResponse() {
-  return {
-    statusCode: 401,
-    body: JSON.stringify({ error: 'Unauthorized' }),
-  };
+  return jsonResponse(401, { error: "Unauthorized" });
 }

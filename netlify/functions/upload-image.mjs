@@ -1,9 +1,9 @@
 import { isAuthorized, unauthorizedResponse } from "./lib/auth.mjs";
 import { writeFile } from "./lib/github.mjs";
+import { detectImageType, extensionFromImageType } from "./lib/image-bytes.mjs";
 import { jsonResponse } from "./lib/response.mjs";
 
-const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const MAX_BYTES = 2 * 1024 * 1024;
 
 function slugify(value) {
   return String(value ?? "")
@@ -13,21 +13,6 @@ function slugify(value) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-}
-
-function extensionFromType(contentType) {
-  switch (contentType) {
-    case "image/jpeg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "image/gif":
-      return "gif";
-    default:
-      return "jpg";
-  }
 }
 
 export async function handler(event) {
@@ -46,17 +31,10 @@ export async function handler(event) {
     return jsonResponse(400, { ok: false, error: "Données invalides." });
   }
 
-  const { platNom, contentType, dataBase64 } = payload;
+  const { platNom, dataBase64 } = payload;
 
-  if (!platNom || !contentType || !dataBase64) {
+  if (!platNom || !dataBase64) {
     return jsonResponse(400, { ok: false, error: "Photo ou nom de plat manquant." });
-  }
-
-  if (!ALLOWED_TYPES.has(contentType)) {
-    return jsonResponse(400, {
-      ok: false,
-      error: "Format non supporté. Utilisez JPG, PNG, WEBP ou GIF.",
-    });
   }
 
   let buffer;
@@ -69,13 +47,28 @@ export async function handler(event) {
   if (!buffer.length || buffer.length > MAX_BYTES) {
     return jsonResponse(400, {
       ok: false,
-      error: "La photo est trop lourde (maximum 5 Mo).",
+      error: "La photo est trop lourde (maximum 2 Mo).",
+    });
+  }
+
+  const detectedType = detectImageType(buffer);
+  if (!detectedType) {
+    return jsonResponse(400, {
+      ok: false,
+      error: "Format non supporté. Utilisez JPG, PNG, WEBP ou GIF.",
+    });
+  }
+
+  const extension = extensionFromImageType(detectedType);
+  if (!extension) {
+    return jsonResponse(400, {
+      ok: false,
+      error: "Format non supporté. Utilisez JPG, PNG, WEBP ou GIF.",
     });
   }
 
   const slug = slugify(platNom) || "plat";
-  const extension = extensionFromType(contentType);
-  const path = `assets/Plats/${slug}.${extension}`;
+  const path = `assets/Plats/${slug}-${Date.now()}.${extension}`;
 
   try {
     await writeFile(path, buffer, `Ajout photo plat ${platNom} (admin Marlou)`);
@@ -88,7 +81,7 @@ export async function handler(event) {
     console.error(error);
     return jsonResponse(500, {
       ok: false,
-      error: error.message || "Erreur lors de l'envoi de la photo.",
+      error: "Une erreur interne est survenue.",
     });
   }
 }

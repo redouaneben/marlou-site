@@ -477,6 +477,17 @@ function setupDragDrop(container, type) {
   });
 }
 
+const IMAGE_PATH =
+  /^assets\/Plats\/[a-zA-Z0-9àâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ \-&_]+\.(jpg|jpeg|png|webp|gif)$/i;
+
+function isValidImagePath(imagePath) {
+  if (!imagePath) return false;
+  const path = String(imagePath).trim();
+  if (path.includes("..") || path.includes("\\") || path.includes("//")) return false;
+  if (!path.startsWith("assets/Plats/")) return false;
+  return IMAGE_PATH.test(path);
+}
+
 function validateClientMenu() {
   if (editingPlatId) syncModalToPlat();
   readMetaFromForm();
@@ -499,6 +510,12 @@ function validateClientMenu() {
     if (!plat.description?.trim()) errors.push(`${label} : la description est obligatoire.`);
     if (!plat.image?.trim() && !pendingFiles.has(plat.id)) {
       errors.push(`${label} : ajoutez une photo.`);
+    } else if (
+      plat.image?.trim() &&
+      !pendingFiles.has(plat.id) &&
+      !isValidImagePath(plat.image)
+    ) {
+      errors.push(`${label} : chemin d'image invalide.`);
     }
   });
 
@@ -509,6 +526,76 @@ function validateClientMenu() {
   });
 
   return errors;
+}
+
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
+const MAX_IMAGE_WIDTH = 1200;
+const IMAGE_QUALITY = 0.8;
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Impossible de lire la photo."));
+    };
+    img.src = url;
+  });
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Compression impossible."))),
+      type,
+      quality
+    );
+  });
+}
+
+async function compressImageFile(file) {
+  const img = await loadImageFromFile(file);
+  let { width, height } = img;
+
+  if (width > MAX_IMAGE_WIDTH) {
+    height = Math.round((height * MAX_IMAGE_WIDTH) / width);
+    width = MAX_IMAGE_WIDTH;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Compression impossible.");
+
+  ctx.drawImage(img, 0, 0, width, height);
+
+  for (const type of ["image/webp", "image/jpeg"]) {
+    try {
+      const blob = await canvasToBlob(canvas, type, IMAGE_QUALITY);
+      if (blob.size <= MAX_UPLOAD_BYTES) {
+        const ext = type === "image/webp" ? "webp" : "jpg";
+        return new File([blob], `photo.${ext}`, { type, lastModified: Date.now() });
+      }
+    } catch {
+      /* format non supporté, essai suivant */
+    }
+  }
+
+  const fallback = await canvasToBlob(canvas, "image/jpeg", 0.65);
+  if (fallback.size > MAX_UPLOAD_BYTES) {
+    throw new Error("La photo reste trop lourde après compression (maximum 2 Mo).");
+  }
+  return new File([fallback], "photo.jpg", {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
 }
 
 async function fileToBase64(file) {
@@ -652,19 +739,27 @@ function handleLogout() {
   showLogin();
 }
 
-function handlePlatFile(platId, file) {
+async function handlePlatFile(platId, file) {
   if (!file.type.startsWith("image/")) {
     window.alert("Choisissez une image (JPG, PNG, WEBP ou GIF).");
     return;
   }
-  if (file.size > 5 * 1024 * 1024) {
-    window.alert("La photo est trop lourde (maximum 5 Mo).");
+  if (file.size > MAX_SOURCE_BYTES) {
+    window.alert("La photo source est trop lourde (maximum 15 Mo).");
     return;
   }
 
-  pendingFiles.set(platId, file);
+  let compressed;
+  try {
+    compressed = await compressImageFile(file);
+  } catch (error) {
+    window.alert(error.message || "Impossible de préparer la photo.");
+    return;
+  }
+
+  pendingFiles.set(platId, compressed);
   if (previewUrls.has(platId)) URL.revokeObjectURL(previewUrls.get(platId));
-  previewUrls.set(platId, URL.createObjectURL(file));
+  previewUrls.set(platId, URL.createObjectURL(compressed));
 
   if (editingPlatId === platId) {
     updateModalPreview(getPlatById(platId));
