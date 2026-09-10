@@ -273,8 +273,14 @@
         </div>
 
         <div class="cart-form-wrap" id="cart-form-wrap">
-          <form class="cart-form" id="cart-form" novalidate>
-            <p class="cart-form__heading">Finaliser votre commande</p>
+          <div class="cart-details">
+            <section class="cart-items" aria-labelledby="cart-items-heading">
+              <h3 class="cart-items__heading" id="cart-items-heading">Votre sélection</h3>
+              <ul class="cart-items__list" id="cart-items-list"></ul>
+            </section>
+
+            <form class="cart-form" id="cart-form" novalidate>
+              <p class="cart-form__heading">Finaliser votre commande</p>
             <div class="cart-form__grid">
               <label class="cart-form__field">
                 <span class="cart-form__label">Prénom et Nom <abbr title="obligatoire" aria-hidden="true">*</abbr></span>
@@ -295,7 +301,8 @@
                 <textarea class="cart-form__input cart-form__textarea" id="cart-comment" name="comment" rows="2" maxlength="500" placeholder="Allergie, préférence de contact…"></textarea>
               </label>
             </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </div>

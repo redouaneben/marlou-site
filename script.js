@@ -609,6 +609,7 @@ const cartCreneau = document.getElementById("cart-creneau");
 const cartComment = document.getElementById("cart-comment");
 const cartFormHint = document.getElementById("cart-form-hint");
 const cartFormToggle = document.getElementById("cart-form-toggle");
+const cartItemsList = document.getElementById("cart-items-list");
 let isCartFormOpen = false;
 let showCheckoutError = false;
 
@@ -622,7 +623,7 @@ function setCartFormOpen(open) {
     cartFormToggle.setAttribute("aria-expanded", String(isCartFormOpen));
     cartFormToggle.setAttribute(
       "aria-label",
-      isCartFormOpen ? "Masquer mes informations" : "Afficher mes informations"
+      isCartFormOpen ? "Masquer le panier et mes informations" : "Afficher le panier et mes informations"
     );
   }
 }
@@ -728,6 +729,18 @@ function bindDishInteractions() {
   });
 }
 
+function getItemImageSrc(id) {
+  const entry = getCatalogEntry(id);
+  if (!entry) return "";
+
+  if (isBoutiqueItem(id)) {
+    const variant = selectedVariants[id] || "clair";
+    return entry.variantPreviews?.[variant] || entry.images?.[0]?.src || "";
+  }
+
+  return entry.images?.[0]?.src || "";
+}
+
 function getCartSummary() {
   let totalItems = 0;
   let totalPrix = 0;
@@ -746,11 +759,52 @@ function getCartSummary() {
 
       totalItems += qty;
       totalPrix += subtotal;
-      lines.push({ name, qty, price, subtotal });
+      lines.push({
+        id,
+        name,
+        qty,
+        price,
+        subtotal,
+        image: getItemImageSrc(id),
+      });
     }
   });
 
   return { totalItems, totalPrix, lines };
+}
+
+function renderCartItems() {
+  if (!cartItemsList) return;
+
+  const { lines, totalItems } = getCartSummary();
+
+  if (totalItems === 0) {
+    cartItemsList.innerHTML = "";
+    return;
+  }
+
+  cartItemsList.innerHTML = lines
+    .map(
+      (line) => `
+        <li class="cart-item" data-id="${escapeHtml(line.id)}">
+          ${
+            line.image
+              ? `<img class="cart-item__image" src="${escapeHtml(line.image)}" alt="" width="56" height="56" loading="lazy">`
+              : `<span class="cart-item__image cart-item__image--placeholder" aria-hidden="true"></span>`
+          }
+          <div class="cart-item__info">
+            <p class="cart-item__name">${escapeHtml(line.name)}</p>
+            <p class="cart-item__meta">${formatPrice(line.price)} / unité · ${formatPrice(line.subtotal)}</p>
+          </div>
+          <div class="cart-item__qty dish__qty" role="group" aria-label="Quantité ${escapeHtml(line.name)}">
+            <button type="button" class="qty-btn qty-btn--minus" data-cart-qty="${escapeHtml(line.id)}" aria-label="Diminuer la quantité">−</button>
+            <span class="qty-value" aria-live="polite">${line.qty}</span>
+            <button type="button" class="qty-btn qty-btn--plus" data-cart-qty="${escapeHtml(line.id)}" aria-label="Augmenter la quantité">+</button>
+          </div>
+        </li>
+      `
+    )
+    .join("");
 }
 
 function updateUI() {
@@ -779,6 +833,7 @@ function updateUI() {
   });
 
   syncModalQuantity();
+  renderCartItems();
   updateCheckoutState();
 }
 
@@ -885,6 +940,14 @@ function initCheckoutForm() {
 
   cartFormToggle?.addEventListener("click", () => {
     setCartFormOpen(!isCartFormOpen);
+  });
+
+  cartItemsList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-cart-qty]");
+    if (!button) return;
+
+    const id = button.dataset.cartQty;
+    changeQuantity(id, button.classList.contains("qty-btn--plus") ? 1 : -1);
   });
 
   const fields = [cartCustomerName, cartCustomerPhone, cartCreneau, cartComment];
