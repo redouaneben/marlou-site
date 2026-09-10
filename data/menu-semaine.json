@@ -11,10 +11,22 @@
         "adresse": "49 Route de Chandieu, Toussieu",
         "periode": "début de semaine suivante",
         "creneaux": [
-          { "id": "lun-17h", "label": "Lundi — 17h à 18h" },
-          { "id": "mar-12h", "label": "Mardi — 12h à 13h" },
-          { "id": "mer-18h", "label": "Mercredi — 18h à 19h" },
-          { "id": "jeu-12h", "label": "Jeudi — 12h à 13h" }
+          {
+            "id": "lun-17h",
+            "label": "Lundi — 17h à 18h"
+          },
+          {
+            "id": "mar-12h",
+            "label": "Mardi — 12h à 13h"
+          },
+          {
+            "id": "mer-18h",
+            "label": "Mercredi — 18h à 19h"
+          },
+          {
+            "id": "jeu-12h",
+            "label": "Jeudi — 12h à 13h"
+          }
         ]
       }
     }
