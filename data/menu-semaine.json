@@ -41,7 +41,7 @@
       "id": "1",
       "nom": "Lasagnes maison",
       "prix": 9.5,
-      "portions": "",
+      "portions": 2,
       "description": "Bœuf mijoté, sauce tomate, chèvre et mozzarella",
       "composition": "Pâtes fraîches, bœuf haché mijoté, sauce tomate maison, chèvre, mozzarella, oignons, herbes de Provence, parmesan.",
       "allergenes": "Gluten, lait, œuf. Traces possibles de fruits à coque.",
